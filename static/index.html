@@ -175,6 +175,31 @@ body {
 
 /* ── OVERVIEW ── */
 .platform-section { margin-bottom: 24px; }
+
+/* Platform comparison table (when both iOS + Android) */
+.plat-compare { margin-bottom: 24px; }
+.plat-compare-title {
+  font-size: 11px; font-weight: 700; letter-spacing: .08em;
+  text-transform: uppercase; color: var(--dim); margin-bottom: 10px;
+}
+.plat-grid {
+  display: grid; grid-template-columns: 110px 1fr 1fr;
+  gap: 1px; background: var(--line);
+  border: 1px solid var(--line); border-radius: 10px; overflow: hidden;
+}
+.plat-cell {
+  background: var(--surface); padding: 10px 16px;
+  font-size: 13px; line-height: 1.4;
+}
+.plat-cell.head {
+  background: var(--raised); font-weight: 700; font-size: 12px;
+  text-align: center; display: flex; flex-direction: column;
+  align-items: center; gap: 2px;
+}
+.plat-cell.label { color: var(--dim); font-size: 12px; }
+.plat-cell .big { font-size: 20px; font-weight: 700; }
+.plat-cell .sub { font-size: 11px; color: var(--dim); margin-top: 2px; }
+.plat-not-avail { color: var(--dim); font-style: italic; font-size: 12px; }
 .platform-title {
   font-size: 11px; font-weight: 700; letter-spacing: .1em;
   text-transform: uppercase; color: var(--dim); margin-bottom: 10px;
@@ -442,12 +467,14 @@ function lerp(a, b, t) { return a + (b - a) * t; }
 async function loadList() {
   const res  = await fetch('/results?limit=100');
   const data = await res.json();
-  allItems = data.items.sort((a, b) => {
-    const ra = bestRating(a.apps), rb = bestRating(b.apps);
-    if (ra==null && rb==null) return 0;
-    if (ra==null) return 1; if (rb==null) return -1;
-    return rb - ra;
-  });
+  function hotnessScore(apps) {
+    if (!apps || !apps.length) return 0;
+    const total = apps.reduce((s,a) => s+(a.review_count||0), 0);
+    const ratings = apps.map(a=>a.rating).filter(r=>r!=null);
+    const avgRating = ratings.length ? ratings.reduce((s,r)=>s+r,0)/ratings.length : 0;
+    return total * (avgRating / 5);
+  }
+  allItems = data.items.sort((a, b) => hotnessScore(b.apps) - hotnessScore(a.apps));
   document.getElementById('compCount').textContent = `(${allItems.length})`;
   const totalRevs = data.items.reduce((s,it)=>s+(it.apps||[]).reduce((ss,a)=>ss+(a.review_count||0),0),0);
   const withApps  = data.items.filter(it=>it.apps&&it.apps.length).length;
@@ -524,15 +551,64 @@ function renderDetail(report) {
 }
 
 /* ── 總覽 Tab ── */
+function installCell(app) {
+  if (app.platform === 'app_store') {
+    return `<div class="metric-box"><div class="metric-label">下載量</div><div class="metric-val plat-not-avail" style="font-size:13px">不公開</div><div class="metric-sub">Apple 未公開數據</div></div>`;
+  }
+  return app.installs
+    ? `<div class="metric-box"><div class="metric-label">下載量</div><div class="metric-val" style="font-size:14px">${esc(app.installs)}</div><div class="metric-sub">安裝次數</div></div>`
+    : '';
+}
+
+function renderPlatformComparison(ios, android) {
+  function cell(val, sub, cls='') {
+    return `<div class="plat-cell"><div class="big ${cls}">${val}</div><div class="sub">${sub}</div></div>`;
+  }
+  const iosDl    = '不公開';
+  const iosDlSub = 'Apple 不公開';
+  const andDl    = android.installs ? esc(android.installs) : '—';
+  const andDlSub = '安裝次數';
+  return `<div class="plat-compare">
+    <div class="plat-grid">
+      <div class="plat-cell head" style="background:var(--raised)">指標</div>
+      <div class="plat-cell head">${PLATFORM_ICON.app_store} iOS</div>
+      <div class="plat-cell head">${PLATFORM_ICON.google_play} Android</div>
+
+      <div class="plat-cell label">平均評分</div>
+      ${cell(ios.rating!=null?ios.rating.toFixed(2):'—','/ 5 分',ratingClass(ios.rating))}
+      ${cell(android.rating!=null?android.rating.toFixed(2):'—','/ 5 分',ratingClass(android.rating))}
+
+      <div class="plat-cell label">評分人數</div>
+      ${cell(ios.review_count!=null?ios.review_count.toLocaleString():'—','累積評分')}
+      ${cell(android.review_count!=null?android.review_count.toLocaleString():'—','累積評分')}
+
+      <div class="plat-cell label">下載量</div>
+      <div class="plat-cell"><div class="big plat-not-avail" style="font-size:13px">${iosDl}</div><div class="sub">${iosDlSub}</div></div>
+      ${cell(andDl, andDlSub)}
+
+      <div class="plat-cell label">已爬評論</div>
+      ${cell(ios.reviews.length+' 則','文字評論數')}
+      ${cell(android.reviews.length+' 則','文字評論數')}
+    </div>
+  </div>`;
+}
+
 function renderOverview(report) {
   if (!report.apps||!report.apps.length) return `<div style="color:var(--dim);font-size:14px;line-height:2;padding:8px 0">此競品尚未找到對應的行動 App。<br><span style="color:var(--accent)">目前為純 Web 服務。</span></div>`;
+  const ios     = report.apps.find(a=>a.platform==='app_store');
+  const android = report.apps.find(a=>a.platform==='google_play');
+
+  // Both platforms → comparison table
+  if (ios && android) return renderPlatformComparison(ios, android);
+
+  // Single platform → stacked card (with iOS download note)
   return report.apps.map(app => `
     <div class="platform-section">
       <div class="platform-title">${PLATFORM_ICON[app.platform]||''} ${PLATFORM_ZH[app.platform]||app.platform}</div>
       <div class="metrics-row">
         <div class="metric-box"><div class="metric-label">平均評分</div><div class="metric-val ${ratingClass(app.rating)}">${app.rating!=null?app.rating.toFixed(2):'—'}</div><div class="metric-sub">滿分 5 分</div></div>
         <div class="metric-box"><div class="metric-label">評分人數</div><div class="metric-val">${app.review_count!=null?app.review_count.toLocaleString():'—'}</div><div class="metric-sub">累積評分數</div></div>
-        ${app.installs?`<div class="metric-box"><div class="metric-label">下載量</div><div class="metric-val" style="font-size:14px">${esc(app.installs)}</div><div class="metric-sub">安裝次數</div></div>`:''}
+        ${installCell(app)}
         <div class="metric-box"><div class="metric-label">已爬取</div><div class="metric-val">${app.reviews.length}</div><div class="metric-sub">則評論</div></div>
       </div>
     </div>`).join('');
