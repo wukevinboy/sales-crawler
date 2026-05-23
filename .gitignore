@@ -12,8 +12,8 @@ build/
 .env
 .env.local
 
-# Database
-data/
+# Database — 允許 data/ 進入 git 以便 Vercel 部署快照
+# data/
 
 # macOS
 .DS_Store
