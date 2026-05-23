@@ -595,13 +595,6 @@ function renderPlatformComparison(ios, android) {
 
 function renderOverview(report) {
   if (!report.apps||!report.apps.length) return `<div style="color:var(--dim);font-size:14px;line-height:2;padding:8px 0">此競品尚未找到對應的行動 App。<br><span style="color:var(--accent)">目前為純 Web 服務。</span></div>`;
-  const ios     = report.apps.find(a=>a.platform==='app_store');
-  const android = report.apps.find(a=>a.platform==='google_play');
-
-  // Both platforms → comparison table
-  if (ios && android) return renderPlatformComparison(ios, android);
-
-  // Single platform → stacked card (with iOS download note)
   return report.apps.map(app => `
     <div class="platform-section">
       <div class="platform-title">${PLATFORM_ICON[app.platform]||''} ${PLATFORM_ZH[app.platform]||app.platform}</div>
