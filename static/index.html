@@ -1,27 +1,54 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
+<html lang="zh-TW" data-theme="light">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>業務員 AI 對練 — 競品調研</title>
+<title>競品雷達 — 業務員 AI 對練</title>
+<script>
+// 防 FOUC：初始化主題
+(function(){
+  var t = localStorage.getItem('theme') || 'light';
+  document.documentElement.dataset.theme = t;
+})();
+</script>
 <style>
+/* ── 暗色 token（預設） ── */
 :root {
-  --bg:       #080d1a;
-  --surface:  #0f172a;
-  --raised:   #1a2540;
-  --border:   #1e3a5f22;
-  --line:     #1e3060;
-  --accent:   #3b82f6;
-  --accent2:  #60a5fa;
-  --text:     #e2e8f0;
-  --muted:    #94a3b8;
-  --dim:      #475569;
-  --green:    #10b981;
-  --amber:    #f59e0b;
-  --red:      #ef4444;
+  --bg:      #080d1a;
+  --surface: #0f172a;
+  --raised:  #1a2540;
+  --line:    #1e3060;
+  --accent:  #3b82f6;
+  --accent2: #60a5fa;
+  --text:    #e2e8f0;
+  --muted:   #94a3b8;
+  --dim:     #475569;
+  --green:   #10b981;
+  --amber:   #f59e0b;
+  --red:     #ef4444;
+  --shadow:  0 1px 3px rgba(0,0,0,.5);
   --sidebar-w: 300px;
 }
+
+/* ── 明亮 token 覆蓋 ── */
+[data-theme="light"] {
+  --bg:      #f1f5f9;
+  --surface: #ffffff;
+  --raised:  #f8fafc;
+  --line:    #e2e8f0;
+  --accent:  #2563eb;
+  --accent2: #1d4ed8;
+  --text:    #0f172a;
+  --muted:   #475569;
+  --dim:     #94a3b8;
+  --green:   #059669;
+  --amber:   #d97706;
+  --red:     #dc2626;
+  --shadow:  0 1px 4px rgba(0,0,0,.08);
+}
+
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
 body {
   font-family: -apple-system, BlinkMacSystemFont, "PingFang TC", "Noto Sans TC", "Segoe UI", sans-serif;
   background: var(--bg);
@@ -30,66 +57,88 @@ body {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  transition: background 200ms, color 200ms;
 }
 
-/* TOPBAR */
+/* ── TOPBAR ── */
 .topbar {
   display: flex;
   align-items: center;
   gap: 16px;
-  padding: 0 24px;
-  height: 56px;
+  padding: 0 20px;
+  height: 54px;
   background: var(--surface);
   border-bottom: 1px solid var(--line);
   flex-shrink: 0;
+  box-shadow: var(--shadow);
 }
-.topbar-logo { font-size: 14px; font-weight: 700; letter-spacing: .06em; color: var(--accent2); }
+.topbar-logo { font-size: 14px; font-weight: 800; letter-spacing: .04em; color: var(--accent); }
 .topbar-sub  { font-size: 12px; color: var(--dim); }
-.topbar-stats { margin-left: auto; display: flex; gap: 24px; }
+.topbar-stats { margin-left: auto; display: flex; align-items: center; gap: 20px; }
 .stat-pill { font-size: 11px; color: var(--muted); }
-.stat-pill span { color: var(--text); font-weight: 600; font-size: 13px; margin-right: 4px; }
+.stat-pill span { color: var(--text); font-weight: 700; font-size: 13px; margin-right: 3px; }
 
-/* LAYOUT */
-.layout { display: grid; grid-template-columns: var(--sidebar-w) 1fr; flex: 1; overflow: hidden; }
+.theme-btn {
+  width: 32px; height: 32px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: var(--raised);
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 15px;
+  display: flex; align-items: center; justify-content: center;
+  transition: background 150ms, color 150ms;
+  flex-shrink: 0;
+}
+.theme-btn:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
 
-/* SIDEBAR */
+/* ── LAYOUT ── */
+.layout {
+  display: grid;
+  grid-template-columns: var(--sidebar-w) 1fr;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* ── SIDEBAR ── */
 .sidebar {
   background: var(--surface);
   border-right: 1px solid var(--line);
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
+  display: flex; flex-direction: column; overflow: hidden;
+  box-shadow: var(--shadow);
 }
 .sidebar-hd {
-  padding: 14px 16px 10px;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: .1em;
-  text-transform: uppercase;
+  padding: 12px 16px;
+  font-size: 11px; font-weight: 700;
+  letter-spacing: .1em; text-transform: uppercase;
   color: var(--dim);
   border-bottom: 1px solid var(--line);
+  background: var(--surface);
 }
 .sidebar-list { overflow-y: auto; flex: 1; }
 .sidebar-list::-webkit-scrollbar { width: 4px; }
-.sidebar-list::-webkit-scrollbar-thumb { background: var(--raised); border-radius: 4px; }
+.sidebar-list::-webkit-scrollbar-thumb { background: var(--line); border-radius: 4px; }
 
 .comp-card {
-  padding: 14px 16px;
+  padding: 12px 16px;
   border-bottom: 1px solid var(--line);
   cursor: pointer;
-  transition: background 150ms;
+  transition: background 120ms;
+  border-left: 3px solid transparent;
 }
 .comp-card:hover { background: var(--raised); }
-.comp-card.active { background: #1a2f5a; border-left: 3px solid var(--accent); }
+[data-theme="dark"]  .comp-card.active { background: #1a2f5a; border-left-color: var(--accent); }
+[data-theme="light"] .comp-card.active { background: #eff6ff; border-left-color: var(--accent); }
 
 .comp-name { font-size: 13px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .comp-url  { font-size: 11px; color: var(--dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
-.comp-meta { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.comp-meta { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
 
 .platform-badge {
-  display: flex; align-items: center; gap: 4px;
+  display: flex; align-items: center; gap: 3px;
   font-size: 11px; padding: 2px 7px; border-radius: 4px;
-  background: var(--raised); color: var(--muted);
+  background: var(--bg); color: var(--muted);
+  border: 1px solid var(--line);
 }
 .platform-badge .stars { font-size: 11px; font-weight: 700; }
 .stars.g { color: var(--green); }
@@ -97,112 +146,203 @@ body {
 .stars.r { color: var(--red); }
 .no-app-badge {
   font-size: 10px; padding: 2px 7px; border-radius: 4px;
-  background: #1e293b; color: var(--dim);
+  background: var(--bg); color: var(--dim); border: 1px solid var(--line);
 }
 
-/* DETAIL */
+/* ── DETAIL ── */
 .detail { display: flex; flex-direction: column; overflow: hidden; }
-.detail-hd { padding: 16px 24px 0; border-bottom: 1px solid var(--line); flex-shrink: 0; }
-.detail-title { font-size: 20px; font-weight: 700; color: var(--text); }
-.detail-url   { font-size: 12px; color: var(--accent2); margin-top: 2px; }
-.detail-desc  { font-size: 12px; color: var(--muted); margin-top: 6px; line-height: 1.5; max-height: 48px; overflow: hidden; }
+.detail-hd { padding: 14px 22px 0; border-bottom: 1px solid var(--line); flex-shrink: 0; background: var(--surface); }
+.detail-title { font-size: 19px; font-weight: 700; color: var(--text); }
+.detail-url   { font-size: 12px; color: var(--accent); margin-top: 2px; }
+.detail-desc  { font-size: 12px; color: var(--muted); margin-top: 5px; line-height: 1.55; max-height: 40px; overflow: hidden; }
 
-.tabs { display: flex; gap: 2px; margin-top: 12px; }
+.tabs { display: flex; gap: 0; margin-top: 10px; }
 .tab-btn {
   padding: 8px 18px; font-size: 13px; font-weight: 500;
   color: var(--dim); background: none; border: none;
   border-bottom: 2px solid transparent; cursor: pointer;
-  transition: color 150ms, border-color 150ms;
+  transition: color 120ms, border-color 120ms;
 }
 .tab-btn:hover { color: var(--muted); }
-.tab-btn.active { color: var(--accent2); border-bottom-color: var(--accent2); }
+.tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 600; }
 
-.tab-body { flex: 1; overflow-y: auto; padding: 20px 24px 32px; }
+.tab-body { flex: 1; overflow-y: auto; padding: 18px 22px 32px; background: var(--bg); }
 .tab-body::-webkit-scrollbar { width: 4px; }
-.tab-body::-webkit-scrollbar-thumb { background: var(--raised); border-radius: 4px; }
+.tab-body::-webkit-scrollbar-thumb { background: var(--line); border-radius: 4px; }
 
 .tab-pane { display: none; }
 .tab-pane.visible { display: block; }
 
-/* OVERVIEW */
-.platform-section { margin-bottom: 28px; }
+/* ── OVERVIEW ── */
+.platform-section { margin-bottom: 24px; }
 .platform-title {
   font-size: 11px; font-weight: 700; letter-spacing: .1em;
-  text-transform: uppercase; color: var(--dim); margin-bottom: 12px;
-  display: flex; align-items: center; gap: 8px;
+  text-transform: uppercase; color: var(--dim); margin-bottom: 10px;
+  display: flex; align-items: center; gap: 7px;
 }
-.metrics-row { display: flex; gap: 14px; flex-wrap: wrap; }
+.metrics-row { display: flex; gap: 12px; flex-wrap: wrap; }
 .metric-box {
-  background: var(--raised); border: 1px solid var(--line);
-  border-radius: 8px; padding: 12px 18px; min-width: 110px;
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: 10px; padding: 12px 16px; min-width: 108px;
+  box-shadow: var(--shadow);
 }
-.metric-label { font-size: 10px; color: var(--dim); text-transform: uppercase; letter-spacing: .08em; }
-.metric-val   { font-size: 22px; font-weight: 700; color: var(--text); margin-top: 4px; }
+[data-theme="light"] .metric-box { box-shadow: 0 1px 4px rgba(0,0,0,.07); }
+.metric-label { font-size: 10px; color: var(--dim); text-transform: uppercase; letter-spacing: .06em; }
+.metric-val   { font-size: 22px; font-weight: 700; color: var(--text); margin-top: 3px; }
 .metric-val.g { color: var(--green); }
 .metric-val.a { color: var(--amber); }
 .metric-val.r { color: var(--red); }
-.metric-sub   { font-size: 11px; color: var(--muted); margin-top: 2px; }
+.metric-sub   { font-size: 11px; color: var(--muted); margin-top: 1px; }
 
-/* REVIEWS */
-.review-filters { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
-.filter-label { font-size: 11px; color: var(--dim); margin-right: 4px; }
-.filter-btn {
-  padding: 4px 14px; font-size: 12px; font-weight: 500;
-  border-radius: 20px; border: 1px solid var(--line);
-  background: transparent; color: var(--muted); cursor: pointer;
-  transition: all 150ms;
+/* ── REVIEWS ── */
+.rev-controls { margin-bottom: 14px; display: flex; flex-direction: column; gap: 10px; }
+
+.rev-search-wrap { position: relative; }
+.rev-search {
+  width: 100%; padding: 8px 12px 8px 34px;
+  border: 1px solid var(--line); border-radius: 8px;
+  background: var(--surface); color: var(--text);
+  font-size: 13px; outline: none;
+  transition: border-color 150ms;
 }
-.filter-btn.active, .filter-btn:hover { background: var(--accent); border-color: var(--accent); color: #fff; }
+.rev-search:focus { border-color: var(--accent); }
+.rev-search::placeholder { color: var(--dim); }
+.rev-search-icon {
+  position: absolute; left: 10px; top: 50%; transform: translateY(-50%);
+  color: var(--dim); font-size: 14px; pointer-events: none;
+}
 
-.review-count-info { font-size: 12px; color: var(--dim); margin-bottom: 14px; }
+.rev-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.rev-row-label { font-size: 11px; color: var(--dim); flex-shrink: 0; }
+
+.rev-sort {
+  padding: 5px 10px; border: 1px solid var(--line); border-radius: 6px;
+  background: var(--surface); color: var(--text);
+  font-size: 12px; outline: none; cursor: pointer;
+}
+.rev-sort:focus { border-color: var(--accent); }
+
+.filter-btn {
+  padding: 4px 12px; font-size: 12px; font-weight: 500;
+  border-radius: 20px; border: 1px solid var(--line);
+  background: var(--surface); color: var(--muted); cursor: pointer;
+  transition: all 120ms; white-space: nowrap;
+}
+.filter-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+.filter-btn:not(.active):hover { border-color: var(--accent); color: var(--accent); }
+
+.rev-count-info { font-size: 12px; color: var(--dim); margin-bottom: 12px; }
 
 .review-list { display: flex; flex-direction: column; gap: 10px; }
 .review-item {
-  background: var(--raised); border: 1px solid var(--line);
-  border-radius: 8px; padding: 14px 16px;
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: 10px; padding: 13px 15px;
+  box-shadow: var(--shadow);
 }
-.review-top { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; flex-wrap: wrap; }
-.review-stars { display: flex; gap: 2px; }
+[data-theme="light"] .review-item { box-shadow: 0 1px 3px rgba(0,0,0,.06); }
+.review-top { display: flex; align-items: center; gap: 8px; margin-bottom: 7px; flex-wrap: wrap; }
+.review-stars { display: flex; gap: 1px; }
 .star { font-size: 13px; }
 .star.filled { color: var(--amber); }
-.star.empty  { color: var(--dim); }
+.star.empty  { color: var(--line); }
 .review-author { font-size: 12px; font-weight: 600; color: var(--text); }
 .review-date   { font-size: 11px; color: var(--dim); }
 .review-platform {
   margin-left: auto; font-size: 10px; padding: 2px 8px;
-  border-radius: 4px; background: var(--surface); color: var(--dim);
+  border-radius: 4px; background: var(--bg); color: var(--dim);
+  border: 1px solid var(--line);
 }
 .review-content { font-size: 13px; color: var(--muted); line-height: 1.65; }
-
-/* ANALYSIS */
-.analysis-block {
-  background: var(--raised); border: 1px solid var(--line);
-  border-radius: 10px; padding: 18px 20px; margin-bottom: 16px;
+.expand-btn {
+  display: inline-block; margin-top: 5px;
+  font-size: 11px; color: var(--accent); cursor: pointer;
+  background: none; border: none; padding: 0;
 }
+.expand-btn:hover { text-decoration: underline; }
+
+/* ── ANALYSIS ── */
+.analysis-block {
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: 10px; padding: 16px 18px; margin-bottom: 14px;
+  box-shadow: var(--shadow);
+}
+[data-theme="light"] .analysis-block { box-shadow: 0 1px 4px rgba(0,0,0,.07); }
 .analysis-block-title {
   font-size: 11px; font-weight: 700; letter-spacing: .1em;
-  text-transform: uppercase; color: var(--accent2); margin-bottom: 12px;
+  text-transform: uppercase; color: var(--accent); margin-bottom: 12px;
 }
-.analysis-text { font-size: 13px; color: var(--muted); line-height: 1.75; white-space: pre-wrap; }
 
-.keyword-section { margin-top: 4px; }
-.keyword-label  { font-size: 11px; font-weight: 700; letter-spacing: .06em; margin-bottom: 8px; margin-top: 14px; }
+/* 比較表 */
+.compare-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
+  gap: 0;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  overflow: hidden;
+  font-size: 12px;
+}
+.compare-row { display: contents; }
+.compare-cell {
+  padding: 9px 12px;
+  border-bottom: 1px solid var(--line);
+  color: var(--muted);
+  display: flex; align-items: center; gap: 5px;
+}
+.compare-row:last-child .compare-cell { border-bottom: none; }
+.compare-cell.header {
+  background: var(--bg);
+  font-size: 10px; font-weight: 700;
+  letter-spacing: .06em; text-transform: uppercase;
+  color: var(--dim);
+}
+.compare-cell.cell-rating { color: var(--text); font-weight: 600; }
+
+/* 評分分布 */
+.rating-bars { display: flex; flex-direction: column; gap: 7px; }
+.rating-bar-row { display: flex; align-items: center; gap: 10px; }
+.rating-bar-label { font-size: 12px; color: var(--muted); width: 24px; text-align: right; flex-shrink: 0; }
+.rating-bar-track {
+  flex: 1; height: 10px; background: var(--bg);
+  border-radius: 5px; overflow: hidden; border: 1px solid var(--line);
+}
+.rating-bar-fill { height: 100%; border-radius: 5px; transition: width 400ms ease; }
+.rating-bar-pct { font-size: 11px; color: var(--dim); width: 72px; flex-shrink: 0; }
+
+/* 關鍵字雲 */
+.cloud-section { margin-bottom: 12px; }
+.keyword-label { font-size: 11px; font-weight: 700; margin-bottom: 7px; letter-spacing: .06em; }
 .keyword-label.pos { color: var(--green); }
 .keyword-label.neg { color: var(--red); }
-.keyword-chips  { display: flex; flex-wrap: wrap; gap: 6px; }
-.chip { font-size: 12px; padding: 4px 12px; border-radius: 20px; font-weight: 500; }
-.chip.pos { background: #064e3b; color: #6ee7b7; }
-.chip.neg { background: #450a0a; color: #fca5a5; }
+.word-cloud { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.cloud-word {
+  font-weight: 600; cursor: default; line-height: 1;
+  transition: opacity 150ms;
+}
+.cloud-word.pos { color: var(--green); }
+.cloud-word.neg { color: var(--red); }
+[data-theme="light"] .cloud-word.pos { color: #047857; }
+[data-theme="light"] .cloud-word.neg { color: #b91c1c; }
 
-.stat-row { display: flex; gap: 20px; margin-bottom: 14px; flex-wrap: wrap; }
+/* 市場洞察排版 */
+.insight-content { font-size: 13px; color: var(--muted); line-height: 1.75; }
+.insight-h3 { font-size: 14px; font-weight: 700; color: var(--text); margin: 10px 0 6px; }
+.insight-h4 { font-size: 13px; font-weight: 600; color: var(--text); margin: 8px 0 4px; }
+.insight-list { padding-left: 18px; margin: 4px 0 8px; }
+.insight-list li { margin-bottom: 3px; }
+.insight-quote {
+  border-left: 3px solid var(--accent);
+  padding: 6px 12px; margin: 8px 0;
+  background: var(--bg); border-radius: 0 6px 6px 0;
+  font-size: 12px; color: var(--dim); font-style: italic;
+}
+
+.stat-row { display: flex; gap: 18px; margin-bottom: 12px; flex-wrap: wrap; }
 .stat-item { font-size: 12px; color: var(--muted); }
 .stat-item strong { color: var(--text); }
 
 /* 空狀態 */
-.empty-state {
-  display: flex; flex-direction: column; align-items: center;
-  justify-content: center; height: 100%; color: var(--dim); gap: 10px;
-}
+.empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: var(--dim); gap: 10px; }
 .empty-icon { font-size: 40px; opacity: .4; }
 .empty-text { font-size: 14px; }
 .loading { color: var(--dim); font-size: 13px; text-align: center; padding: 48px; }
@@ -213,7 +353,10 @@ body {
 <header class="topbar">
   <div class="topbar-logo">競品雷達</div>
   <div class="topbar-sub">業務員 AI 對練 · 市場調研</div>
-  <div class="topbar-stats" id="topbarStats"></div>
+  <div class="topbar-stats">
+    <div id="topbarStats"></div>
+    <button class="theme-btn" id="themeBtn" onclick="toggleTheme()" title="切換主題">🌙</button>
+  </div>
 </header>
 
 <div class="layout">
@@ -221,7 +364,6 @@ body {
     <div class="sidebar-hd">競品列表 <span id="compCount" style="color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0"></span></div>
     <div class="sidebar-list" id="sidebarList"></div>
   </aside>
-
   <section class="detail">
     <div id="detailPanel" style="height:100%;display:flex;flex-direction:column">
       <div class="empty-state">
@@ -236,31 +378,43 @@ body {
 const PLATFORM_ZH   = {app_store:'App Store (iOS)', google_play:'Google Play (Android)', product_hunt:'Product Hunt'};
 const PLATFORM_ICON = {app_store:'🍎', google_play:'🤖', product_hunt:'🔶'};
 
-let allItems   = [];
+/* ── 全域狀態 ── */
+let allItems  = [];
 let allReports = {};
-let activeId   = null;
-let activeTab  = 'overview';
-let revFilter  = 'all';
+let activeId  = null;
+let activeTab = 'overview';
+let revFilter = 'all';
+let revSort   = 'newest';
+let revStars  = 0;
+let revSearch = '';
+let _cachedRevs = [];
 
-function ratingClass(r) {
-  if (r == null) return '';
-  return r >= 4 ? 'g' : r >= 3 ? 'a' : 'r';
+/* ── 主題 ── */
+function initTheme() {
+  const t = localStorage.getItem('theme') || 'light';
+  document.documentElement.dataset.theme = t;
+  document.getElementById('themeBtn').textContent = t === 'dark' ? '☀️' : '🌙';
 }
+function toggleTheme() {
+  const cur = document.documentElement.dataset.theme;
+  const next = cur === 'dark' ? 'light' : 'dark';
+  document.documentElement.dataset.theme = next;
+  localStorage.setItem('theme', next);
+  document.getElementById('themeBtn').textContent = next === 'dark' ? '☀️' : '🌙';
+}
+initTheme();
 
+/* ── 工具函式 ── */
+function ratingClass(r) { return r == null ? '' : r >= 4 ? 'g' : r >= 3 ? 'a' : 'r'; }
 function starHtml(n) {
-  let h = '';
-  const filled = Math.round(n || 0);
-  for (let i = 1; i <= 5; i++)
-    h += `<span class="star ${i <= filled ? 'filled' : 'empty'}">★</span>`;
-  return h;
+  const f = Math.round(n || 0);
+  return Array.from({length:5}, (_,i) => `<span class="star ${i<f?'filled':'empty'}">★</span>`).join('');
 }
-
 function bestRating(apps) {
   if (!apps || !apps.length) return null;
   const rs = apps.map(a => a.rating).filter(r => r != null);
   return rs.length ? Math.max(...rs) : null;
 }
-
 function inferName(title, url) {
   if (title) {
     let t = title;
@@ -268,63 +422,66 @@ function inferName(title, url) {
       if (t.includes(sep)) { t = t.split(sep)[0].trim(); break; }
     }
     if (t.split(' ').length > 4)
-      return url.replace(/^https?:\/\//, '').replace(/^www\./, '').split('.')[0]
-               .replace(/^(.)/, c => c.toUpperCase());
+      return url.replace(/^https?:\/\//,'').replace(/^www\./,'').split('.')[0]
+               .replace(/^(.)/,c=>c.toUpperCase());
     return t;
   }
-  return url.replace(/^https?:\/\//, '').replace(/^www\./, '').split('.')[0]
-           .replace(/^(.)/, c => c.toUpperCase());
+  return url.replace(/^https?:\/\//,'').replace(/^www\./,'').split('.')[0]
+           .replace(/^(.)/,c=>c.toUpperCase());
 }
-
 function esc(s) {
   return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
+function debounce(fn, ms) {
+  let timer;
+  return (...args) => { clearTimeout(timer); timer = setTimeout(()=>fn(...args), ms); };
+}
+function lerp(a, b, t) { return a + (b - a) * t; }
 
+/* ── 載入競品清單 ── */
 async function loadList() {
   const res  = await fetch('/results?limit=100');
   const data = await res.json();
   allItems = data.items.sort((a, b) => {
     const ra = bestRating(a.apps), rb = bestRating(b.apps);
-    if (ra == null && rb == null) return 0;
-    if (ra == null) return 1; if (rb == null) return -1;
+    if (ra==null && rb==null) return 0;
+    if (ra==null) return 1; if (rb==null) return -1;
     return rb - ra;
   });
-
   document.getElementById('compCount').textContent = `(${allItems.length})`;
-
-  const totalRevs = data.items.reduce((s, it) =>
-    s + (it.apps||[]).reduce((ss, a) => ss + (a.review_count||0), 0), 0);
-  const withApps = data.items.filter(it => it.apps && it.apps.length).length;
-
+  const totalRevs = data.items.reduce((s,it)=>s+(it.apps||[]).reduce((ss,a)=>ss+(a.review_count||0),0),0);
+  const withApps  = data.items.filter(it=>it.apps&&it.apps.length).length;
   document.getElementById('topbarStats').innerHTML = `
-    <div class="stat-pill"><span>${allItems.length}</span> 個競品</div>
-    <div class="stat-pill"><span>${withApps}</span> 有 App</div>
-    <div class="stat-pill"><span>${totalRevs.toLocaleString()}</span> 則評分</div>
+    <span class="stat-pill"><span>${allItems.length}</span> 個競品</span>
+    <span class="stat-pill"><span>${withApps}</span> 有 App</span>
+    <span class="stat-pill"><span>${totalRevs.toLocaleString()}</span> 則評分</span>
   `;
   renderSidebar();
 }
 
+/* ── Sidebar ── */
 function renderSidebar() {
   document.getElementById('sidebarList').innerHTML = allItems.map(item => {
-    const badgeHtml = item.apps && item.apps.length
+    const badges = item.apps && item.apps.length
       ? item.apps.map(a => {
           const c = ratingClass(a.rating);
-          return `<div class="platform-badge">${PLATFORM_ICON[a.platform]||''} <span class="stars ${c}">${a.rating != null ? a.rating.toFixed(1) : 'N/A'}</span></div>`;
+          return `<div class="platform-badge">${PLATFORM_ICON[a.platform]||''} <span class="stars ${c}">${a.rating!=null?a.rating.toFixed(1):'N/A'}</span></div>`;
         }).join('')
       : '<span class="no-app-badge">純 Web 服務</span>';
-    return `<div class="comp-card ${item.id === activeId ? 'active' : ''}" onclick="selectComp('${item.id}')">
-      <div class="comp-name">${esc(inferName(item.title, item.url))}</div>
+    return `<div class="comp-card${item.id===activeId?' active':''}" onclick="selectComp('${item.id}')">
+      <div class="comp-name">${esc(inferName(item.title,item.url))}</div>
       <div class="comp-url">${esc(item.url)}</div>
-      <div class="comp-meta">${badgeHtml}</div>
+      <div class="comp-meta">${badges}</div>
     </div>`;
   }).join('');
 }
 
+/* ── 選中競品 ── */
 async function selectComp(id) {
-  activeId = id; activeTab = 'overview'; revFilter = 'all';
+  activeId=id; activeTab='overview';
+  revFilter='all'; revSort='newest'; revStars=0; revSearch=''; _cachedRevs=[];
   renderSidebar();
   document.getElementById('detailPanel').innerHTML = '<div class="loading">載入中…</div>';
-
   if (!allReports[id]) {
     const res = await fetch(`/results/${id}/report`);
     allReports[id] = await res.json();
@@ -332,172 +489,280 @@ async function selectComp(id) {
   renderDetail(allReports[id]);
 }
 
+/* ── 詳情面板 ── */
 function renderDetail(report) {
-  const item = allItems.find(i => i.id === activeId);
+  const item = allItems.find(i=>i.id===activeId);
   const name = inferName(item.title, item.url);
-  const latestReport = report.reports && report.reports[0];
-  const totalFetched = (report.apps||[]).reduce((s, a) => s + a.reviews.length, 0);
+  // 攤平所有評論並快取
+  _cachedRevs = [];
+  (report.apps||[]).forEach(app => app.reviews.forEach(r => _cachedRevs.push({...r, platform:app.platform})));
+  const totalFetched = _cachedRevs.length;
 
   document.getElementById('detailPanel').innerHTML = `
     <div class="detail-hd">
       <div class="detail-title">${esc(name)}</div>
-      <div class="detail-url"><a href="${esc(report.url)}" target="_blank" style="color:var(--accent2);text-decoration:none">${esc(report.url)}</a></div>
-      ${item.description ? `<div class="detail-desc">${esc(item.description)}</div>` : ''}
+      <div class="detail-url"><a href="${esc(report.url)}" target="_blank" style="color:var(--accent);text-decoration:none">${esc(report.url)}</a></div>
+      ${item.description?`<div class="detail-desc">${esc(item.description)}</div>`:''}
       <div class="tabs">
-        <button class="tab-btn ${activeTab==='overview'?'active':''}" onclick="switchTab('overview')">總覽</button>
-        <button class="tab-btn ${activeTab==='reviews'?'active':''}" onclick="switchTab('reviews')">用戶評論${totalFetched ? ` (${totalFetched})` : ''}</button>
-        <button class="tab-btn ${activeTab==='analysis'?'active':''}" onclick="switchTab('analysis')">市場分析</button>
+        <button class="tab-btn${activeTab==='overview'?' active':''}" onclick="switchTab('overview')">總覽</button>
+        <button class="tab-btn${activeTab==='reviews'?' active':''}" onclick="switchTab('reviews')">用戶評論${totalFetched?` (${totalFetched})`:''}</button>
+        <button class="tab-btn${activeTab==='analysis'?' active':''}" onclick="switchTab('analysis')">市場分析</button>
       </div>
     </div>
     <div class="tab-body">
-      <div id="tab-overview" class="tab-pane ${activeTab==='overview'?'visible':''}">
+      <div id="tab-overview"  class="tab-pane${activeTab==='overview'?' visible':''}">
         ${renderOverview(report)}
       </div>
-      <div id="tab-reviews" class="tab-pane ${activeTab==='reviews'?'visible':''}">
+      <div id="tab-reviews"   class="tab-pane${activeTab==='reviews'?' visible':''}">
         ${renderReviews(report)}
       </div>
-      <div id="tab-analysis" class="tab-pane ${activeTab==='analysis'?'visible':''}">
-        ${renderAnalysis(report, latestReport)}
+      <div id="tab-analysis"  class="tab-pane${activeTab==='analysis'?' visible':''}">
+        ${renderAnalysis(report)}
       </div>
-    </div>
-  `;
+    </div>`;
+  if (activeTab==='reviews') bindReviewEvents();
 }
 
+/* ── 總覽 Tab ── */
 function renderOverview(report) {
-  if (!report.apps || !report.apps.length) {
-    return `<div style="color:var(--dim);font-size:14px;padding:8px 0;line-height:2">
-      此競品尚未找到對應的行動 App。<br>
-      <span style="color:var(--accent2)">目前為純 Web 服務。</span>
-    </div>`;
-  }
-  return report.apps.map(app => {
-    const c = ratingClass(app.rating);
-    return `<div class="platform-section">
-      <div class="platform-title">
-        <span>${PLATFORM_ICON[app.platform]||''}</span>
-        ${PLATFORM_ZH[app.platform]||app.platform}
-      </div>
+  if (!report.apps||!report.apps.length) return `<div style="color:var(--dim);font-size:14px;line-height:2;padding:8px 0">此競品尚未找到對應的行動 App。<br><span style="color:var(--accent)">目前為純 Web 服務。</span></div>`;
+  return report.apps.map(app => `
+    <div class="platform-section">
+      <div class="platform-title">${PLATFORM_ICON[app.platform]||''} ${PLATFORM_ZH[app.platform]||app.platform}</div>
       <div class="metrics-row">
-        <div class="metric-box">
-          <div class="metric-label">平均評分</div>
-          <div class="metric-val ${c}">${app.rating != null ? app.rating.toFixed(2) : '—'}</div>
-          <div class="metric-sub">滿分 5 分</div>
-        </div>
-        <div class="metric-box">
-          <div class="metric-label">評分人數</div>
-          <div class="metric-val">${app.review_count != null ? app.review_count.toLocaleString() : '—'}</div>
-          <div class="metric-sub">累積評分數</div>
-        </div>
-        ${app.installs ? `<div class="metric-box">
-          <div class="metric-label">下載量</div>
-          <div class="metric-val" style="font-size:15px">${esc(app.installs)}</div>
-          <div class="metric-sub">安裝次數</div>
-        </div>` : ''}
-        <div class="metric-box">
-          <div class="metric-label">已爬取</div>
-          <div class="metric-val">${app.reviews.length}</div>
-          <div class="metric-sub">則評論</div>
-        </div>
+        <div class="metric-box"><div class="metric-label">平均評分</div><div class="metric-val ${ratingClass(app.rating)}">${app.rating!=null?app.rating.toFixed(2):'—'}</div><div class="metric-sub">滿分 5 分</div></div>
+        <div class="metric-box"><div class="metric-label">評分人數</div><div class="metric-val">${app.review_count!=null?app.review_count.toLocaleString():'—'}</div><div class="metric-sub">累積評分數</div></div>
+        ${app.installs?`<div class="metric-box"><div class="metric-label">下載量</div><div class="metric-val" style="font-size:14px">${esc(app.installs)}</div><div class="metric-sub">安裝次數</div></div>`:''}
+        <div class="metric-box"><div class="metric-label">已爬取</div><div class="metric-val">${app.reviews.length}</div><div class="metric-sub">則評論</div></div>
       </div>
-    </div>`;
-  }).join('');
+    </div>`).join('');
 }
 
-function renderReviews(report) {
-  if (!report.apps || !report.apps.length)
-    return `<div style="color:var(--dim);font-size:13px">此競品為純 Web 服務，無行動 App 評論。</div>`;
-
-  const all = [];
-  report.apps.forEach(app => {
-    app.reviews.forEach(r => all.push({...r, platform: app.platform, appName: app.app_name}));
+/* ── 評論篩選排序 ── */
+function filterAndSortReviews(all) {
+  let rs = [...all];
+  if (revFilter !== 'all') rs = rs.filter(r=>r.platform===revFilter);
+  if (revStars !== 0)      rs = rs.filter(r=>r.rating===revStars);
+  if (revSearch.trim()) {
+    const q = revSearch.toLowerCase();
+    rs = rs.filter(r=>(r.content||'').toLowerCase().includes(q)||(r.author||'').toLowerCase().includes(q));
+  }
+  rs.sort((a,b)=>{
+    if (revSort==='newest'||revSort==='oldest') {
+      const da = a.review_date||'', db = b.review_date||'';
+      if (!da && !db) return 0; if (!da) return 1; if (!db) return -1;
+      return revSort==='newest' ? db.localeCompare(da) : da.localeCompare(db);
+    }
+    const ra = a.rating??0, rb = b.rating??0;
+    return revSort==='rating_high' ? rb-ra : ra-rb;
   });
+  return rs;
+}
 
-  if (!all.length)
-    return `<div style="color:var(--dim);font-size:13px">尚無評論資料。</div>`;
-
-  const platforms = [...new Set(all.map(r => r.platform))];
-  const filterBtns = ['all', ...platforms].map(p =>
-    `<button class="filter-btn ${revFilter===p?'active':''}" onclick="setRevFilter('${p}')">
-      ${p === 'all' ? '全部' : (PLATFORM_ZH[p]||p)}
-    </button>`
-  ).join('');
-
-  const filtered = revFilter === 'all' ? all : all.filter(r => r.platform === revFilter);
-  const items = filtered.map(r => `
-    <div class="review-item">
-      <div class="review-top">
-        <div class="review-stars">${starHtml(r.rating)}</div>
-        <div class="review-author">${esc(r.author || '匿名')}</div>
-        ${r.review_date ? `<div class="review-date">${esc(r.review_date)}</div>` : ''}
-        <div class="review-platform">${PLATFORM_ICON[r.platform]||''} ${PLATFORM_ZH[r.platform]||r.platform}</div>
-      </div>
-      <div class="review-content">${esc(r.content || '')}</div>
-    </div>`
-  ).join('');
-
-  return `
-    <div class="review-filters">
-      <span class="filter-label">篩選平台：</span>
-      ${filterBtns}
+/* ── 單則評論 HTML ── */
+function renderReviewItem(r, idx) {
+  const MAX = 200;
+  const content = r.content || '';
+  const isLong  = content.length > MAX;
+  const bodyHtml = isLong
+    ? `<span class="rev-short-${idx}">${esc(content.slice(0,MAX))}… <button class="expand-btn" data-idx="${idx}" data-full="${esc(content)}">展開 ↓</button></span>`
+    : esc(content);
+  return `<div class="review-item">
+    <div class="review-top">
+      <div class="review-stars">${starHtml(r.rating)}</div>
+      <div class="review-author">${esc(r.author||'匿名')}</div>
+      ${r.review_date?`<div class="review-date">${esc(r.review_date)}</div>`:''}
+      <div class="review-platform">${PLATFORM_ICON[r.platform]||''} ${PLATFORM_ZH[r.platform]||r.platform}</div>
     </div>
-    <div class="review-count-info">顯示 <strong style="color:var(--text)">${filtered.length}</strong> 則 / 共 ${all.length} 則評論</div>
-    <div class="review-list">${items}</div>`;
+    <div class="review-content">${bodyHtml}</div>
+  </div>`;
 }
 
-function renderAnalysis(report, latestReport) {
-  if (!latestReport)
-    return `<div style="color:var(--dim);font-size:13px">尚無分析報告。</div>`;
+/* ── 評論 Tab ── */
+function renderReviews(report) {
+  if (!report.apps||!report.apps.length) return `<div style="color:var(--dim);font-size:13px">此競品為純 Web 服務，無行動 App 評論。</div>`;
+  if (!_cachedRevs.length) return `<div style="color:var(--dim);font-size:13px">尚無評論資料。</div>`;
+  const platforms = [...new Set(_cachedRevs.map(r=>r.platform))];
+  const platformBtns = ['all',...platforms].map(p=>
+    `<button class="filter-btn${revFilter===p?' active':''}" data-platform="${p}">${p==='all'?'全部':(PLATFORM_ZH[p]||p)}</button>`
+  ).join('');
+  const starBtns = [0,5,4,3,2,1].map(s=>
+    `<button class="filter-btn${revStars===s?' active':''}" data-star="${s}">${s===0?'全部':s+'★'}</button>`
+  ).join('');
+  return `
+    <div class="rev-controls">
+      <div class="rev-search-wrap">
+        <span class="rev-search-icon">🔍</span>
+        <input class="rev-search" id="revSearchInput" type="text" placeholder="搜尋評論內容或作者…" value="${esc(revSearch)}">
+      </div>
+      <div class="rev-row">
+        <span class="rev-row-label">排序：</span>
+        <select class="rev-sort" id="revSortSel">
+          <option value="newest"${revSort==='newest'?' selected':''}>最新優先</option>
+          <option value="oldest"${revSort==='oldest'?' selected':''}>最舊優先</option>
+          <option value="rating_high"${revSort==='rating_high'?' selected':''}>評分高→低</option>
+          <option value="rating_low"${revSort==='rating_low'?' selected':''}>評分低→高</option>
+        </select>
+      </div>
+      <div class="rev-row"><span class="rev-row-label">星等：</span>${starBtns}</div>
+      <div class="rev-row"><span class="rev-row-label">平台：</span>${platformBtns}</div>
+    </div>
+    <div id="revCountInfo" class="rev-count-info"></div>
+    <div class="review-list" id="revList"></div>`;
+}
 
-  const rh  = latestReport.review_highlights || {};
-  const pos = (rh.positive || []).slice(0, 12);
-  const neg = (rh.negative || []).slice(0, 12);
-  let html  = '';
+function refreshReviewList() {
+  const filtered = filterAndSortReviews(_cachedRevs);
+  const countEl = document.getElementById('revCountInfo');
+  const listEl  = document.getElementById('revList');
+  if (!countEl||!listEl) return;
+  countEl.innerHTML = `顯示 <strong style="color:var(--text)">${filtered.length}</strong> 則 / 共 ${_cachedRevs.length} 則評論`;
+  listEl.innerHTML  = filtered.length
+    ? filtered.map((r,i)=>renderReviewItem(r,i)).join('')
+    : '<div style="color:var(--dim);font-size:13px;padding:20px 0">無符合條件的評論。</div>';
+}
 
-  if (latestReport.competitor_summary) {
-    html += `<div class="analysis-block">
-      <div class="analysis-block-title">競品分析摘要</div>
-      <div class="analysis-text">${esc(latestReport.competitor_summary)}</div>
-    </div>`;
+function bindReviewEvents() {
+  refreshReviewList();
+  const searchInput = document.getElementById('revSearchInput');
+  const sortSel     = document.getElementById('revSortSel');
+  const revList     = document.getElementById('revList');
+  if (!searchInput||!sortSel||!revList) return;
+
+  searchInput.addEventListener('input', debounce(e=>{revSearch=e.target.value;refreshReviewList();},250));
+  sortSel.addEventListener('change', e=>{revSort=e.target.value;refreshReviewList();});
+
+  // 星等 & 平台篩選（event delegation on parent .tab-pane）
+  const pane = document.getElementById('tab-reviews');
+  if (pane) {
+    pane.addEventListener('click', e=>{
+      const b = e.target.closest('.filter-btn');
+      if (!b) {
+        // 展開評論
+        const eb = e.target.closest('.expand-btn');
+        if (eb) {
+          const full = eb.dataset.full;
+          eb.parentElement.innerHTML = esc(full);
+        }
+        return;
+      }
+      if ('star' in b.dataset) { revStars=parseInt(b.dataset.star); refreshReviewList(); }
+      if ('platform' in b.dataset) { revFilter=b.dataset.platform; refreshReviewList(); }
+    });
   }
+}
 
-  if (latestReport.market_insight) {
-    html += `<div class="analysis-block">
-      <div class="analysis-block-title">市場洞察</div>
-      <div class="analysis-text">${esc(latestReport.market_insight)}</div>
-    </div>`;
+/* ── 分析 Tab ── */
+function parseMarkdownLite(text) {
+  const lines = (text||'').split('\n');
+  let html = '', inList = false;
+  for (const raw of lines) {
+    const line = raw.trimEnd();
+    if (line.startsWith('# '))       { if(inList){html+='</ul>';inList=false;} html+=`<h3 class="insight-h3">${esc(line.slice(2))}</h3>`; }
+    else if (line.startsWith('## ')) { if(inList){html+='</ul>';inList=false;} html+=`<h4 class="insight-h4">${esc(line.slice(3))}</h4>`; }
+    else if (line.startsWith('- '))  { if(!inList){html+='<ul class="insight-list">';inList=true;} html+=`<li>${esc(line.slice(2))}</li>`; }
+    else if (line.startsWith('> '))  { if(inList){html+='</ul>';inList=false;} html+=`<blockquote class="insight-quote">${esc(line.slice(2))}</blockquote>`; }
+    else { if(inList){html+='</ul>';inList=false;} if(line) html+=`<p style="margin:4px 0">${esc(line)}</p>`; }
   }
+  if(inList) html+='</ul>';
+  return html;
+}
 
-  if (pos.length || neg.length) {
+function buildRatingDist(apps) {
+  const counts = {5:0,4:0,3:0,2:0,1:0};
+  let total = 0;
+  (apps||[]).forEach(app=>(app.reviews||[]).forEach(r=>{
+    const s = Math.round(r.rating||0);
+    if(s>=1&&s<=5){counts[s]++;total++;}
+  }));
+  return {counts, total};
+}
+
+function renderAnalysis(report) {
+  const latestReport = report.reports&&report.reports[0];
+  const apps = report.apps||[];
+  let html = '';
+
+  /* A. 比較表 */
+  if (apps.length) {
+    const rows = apps.map(app=>`
+      <div class="compare-row">
+        <div class="compare-cell">${PLATFORM_ICON[app.platform]||''} ${PLATFORM_ZH[app.platform]||app.platform}</div>
+        <div class="compare-cell cell-rating">${starHtml(app.rating)} ${app.rating!=null?app.rating.toFixed(2):'—'}</div>
+        <div class="compare-cell">${app.review_count!=null?app.review_count.toLocaleString():'—'}</div>
+        <div class="compare-cell">${app.reviews.length} 則</div>
+        <div class="compare-cell">${app.installs?esc(app.installs):'—'}</div>
+      </div>`).join('');
     html += `<div class="analysis-block">
-      <div class="analysis-block-title">用戶評論情緒分析</div>
-      ${rh.avg_rating != null ? `<div class="stat-row">
-        <div class="stat-item">平均評分 <strong>${rh.avg_rating}</strong></div>
-        <div class="stat-item">分析評論數 <strong>${rh.total}</strong> 則</div>
-      </div>` : ''}
-      <div class="keyword-section">
-        ${pos.length ? `<div class="keyword-label pos">▲ 正面高頻關鍵字</div>
-        <div class="keyword-chips">${pos.map(w => `<span class="chip pos">${esc(w)}</span>`).join('')}</div>` : ''}
-        ${neg.length ? `<div class="keyword-label neg">▼ 負面高頻關鍵字</div>
-        <div class="keyword-chips">${neg.map(w => `<span class="chip neg">${esc(w)}</span>`).join('')}</div>` : ''}
+      <div class="analysis-block-title">平台比較</div>
+      <div class="compare-grid">
+        <div class="compare-row">
+          <div class="compare-cell header">平台</div>
+          <div class="compare-cell header">評分</div>
+          <div class="compare-cell header">評分人數</div>
+          <div class="compare-cell header">爬取評論</div>
+          <div class="compare-cell header">下載量</div>
+        </div>
+        ${rows}
       </div>
     </div>`;
   }
 
-  return html || `<div style="color:var(--dim);font-size:13px">分析進行中。</div>`;
+  /* B. 評分分布 */
+  if (apps.length) {
+    const {counts, total} = buildRatingDist(apps);
+    if (total > 0) {
+      const barColors = {5:'var(--green)',4:'var(--green)',3:'var(--amber)',2:'var(--red)',1:'var(--red)'};
+      const bars = [5,4,3,2,1].map(s=>{
+        const pct = total>0 ? Math.round(counts[s]/total*100) : 0;
+        return `<div class="rating-bar-row">
+          <div class="rating-bar-label">${s}★</div>
+          <div class="rating-bar-track"><div class="rating-bar-fill" style="width:${pct}%;background:${barColors[s]}"></div></div>
+          <div class="rating-bar-pct">${pct}% (${counts[s]} 則)</div>
+        </div>`;
+      }).join('');
+      html += `<div class="analysis-block"><div class="analysis-block-title">評分分布</div><div class="rating-bars">${bars}</div></div>`;
+    }
+  }
+
+  /* C. 關鍵字雲 */
+  if (latestReport) {
+    const rh  = latestReport.review_highlights||{};
+    const pos = (rh.positive||[]).slice(0,12);
+    const neg = (rh.negative||[]).slice(0,12);
+    if (pos.length||neg.length) {
+      const cloudHtml = (words, cls) => words.map((w,i)=>{
+        const size = Math.round(lerp(22, 12, i/(Math.max(words.length-1,1))));
+        return `<span class="cloud-word ${cls}" style="font-size:${size}px">${esc(w)}</span>`;
+      }).join('');
+      html += `<div class="analysis-block">
+        <div class="analysis-block-title">關鍵字雲</div>
+        ${rh.avg_rating!=null?`<div class="stat-row"><div class="stat-item">平均評分 <strong>${rh.avg_rating}</strong></div><div class="stat-item">分析評論 <strong>${rh.total}</strong> 則</div></div>`:''}
+        ${pos.length?`<div class="cloud-section"><div class="keyword-label pos">▲ 正面關鍵字</div><div class="word-cloud">${cloudHtml(pos,'pos')}</div></div>`:''}
+        ${neg.length?`<div class="cloud-section"><div class="keyword-label neg">▼ 負面關鍵字</div><div class="word-cloud">${cloudHtml(neg,'neg')}</div></div>`:''}
+      </div>`;
+    }
+  }
+
+  /* D. 市場洞察 */
+  if (latestReport&&latestReport.market_insight) {
+    html += `<div class="analysis-block"><div class="analysis-block-title">市場洞察</div><div class="insight-content">${parseMarkdownLite(latestReport.market_insight)}</div></div>`;
+  }
+
+  /* E. 競品摘要 */
+  if (latestReport&&latestReport.competitor_summary) {
+    html += `<div class="analysis-block"><div class="analysis-block-title">競品分析摘要</div><div class="insight-content">${parseMarkdownLite(latestReport.competitor_summary)}</div></div>`;
+  }
+
+  return html || `<div style="color:var(--dim);font-size:13px">尚無分析資料。</div>`;
 }
 
+/* ── Tab 切換 ── */
 function switchTab(tab) {
   activeTab = tab;
-  document.querySelectorAll('.tab-btn').forEach(b =>
-    b.classList.toggle('active', b.getAttribute('onclick').includes(`'${tab}'`)));
-  document.querySelectorAll('.tab-pane').forEach(p =>
-    p.classList.toggle('visible', p.id === `tab-${tab}`));
-}
-
-function setRevFilter(filter) {
-  revFilter = filter;
-  const report = allReports[activeId];
-  if (report) document.getElementById('tab-reviews').innerHTML = renderReviews(report);
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active', b.getAttribute('onclick').includes(`'${tab}'`)));
+  document.querySelectorAll('.tab-pane').forEach(p=>p.classList.toggle('visible', p.id===`tab-${tab}`));
+  if (tab==='reviews') bindReviewEvents();
 }
 
 loadList();
