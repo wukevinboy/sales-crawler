@@ -24,6 +24,8 @@ class Website(Base):
     keywords: Mapped[dict | None] = mapped_column(JSON)
     has_app: Mapped[bool] = mapped_column(Boolean, default=False)
     crawled_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    summary_zh: Mapped[str | None] = mapped_column(Text)
+    features_zh: Mapped[str | None] = mapped_column(Text)
 
     apps: Mapped[list["App"]] = relationship(back_populates="website", cascade="all, delete-orphan")
     reports: Mapped[list["AnalysisReport"]] = relationship(back_populates="website", cascade="all, delete-orphan")
@@ -67,6 +69,7 @@ class AnalysisReport(Base):
     competitor_summary: Mapped[str | None] = mapped_column(Text)
     review_highlights: Mapped[dict | None] = mapped_column(JSON)
     market_insight: Mapped[str | None] = mapped_column(Text)
+    insights_json: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
     website: Mapped["Website"] = relationship(back_populates="reports")

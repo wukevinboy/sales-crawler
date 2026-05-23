@@ -82,6 +82,8 @@ class WebsiteDetailResponse(BaseModel):
     keywords: list[str] | None
     has_app: bool
     crawled_at: datetime
+    summary_zh: str | None = None
+    features_zh: str | None = None
     apps: list[AppResponse] = []
     reports: list[ReportResponse] = []
 

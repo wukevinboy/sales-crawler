@@ -1,0 +1,1723 @@
+<!DOCTYPE html>
+<html lang="zh-TW" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>競品雷達 — 業務員 AI 對練</title>
+<script>
+// 防 FOUC：初始化主題
+(function(){
+  var t = localStorage.getItem('theme') || 'light';
+  document.documentElement.dataset.theme = t;
+})();
+</script>
+<style>
+/* ── 暗色 token（預設） ── */
+:root {
+  --bg:      #080d1a;
+  --surface: #0f172a;
+  --raised:  #1a2540;
+  --line:    #1e3060;
+  --accent:  #3b82f6;
+  --accent2: #60a5fa;
+  --text:    #e2e8f0;
+  --muted:   #94a3b8;
+  --dim:     #475569;
+  --green:   #10b981;
+  --amber:   #f59e0b;
+  --red:     #ef4444;
+  --shadow:  0 1px 3px rgba(0,0,0,.5);
+  --sidebar-w: 300px;
+}
+
+/* ── 明亮 token 覆蓋 ── */
+[data-theme="light"] {
+  --bg:      #f1f5f9;
+  --surface: #ffffff;
+  --raised:  #f8fafc;
+  --line:    #e2e8f0;
+  --accent:  #2563eb;
+  --accent2: #1d4ed8;
+  --text:    #0f172a;
+  --muted:   #475569;
+  --dim:     #94a3b8;
+  --green:   #059669;
+  --amber:   #d97706;
+  --red:     #dc2626;
+  --shadow:  0 1px 4px rgba(0,0,0,.08);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang TC", "Noto Sans TC", "Segoe UI", sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition: background 200ms, color 200ms;
+}
+
+/* ── TOPBAR ── */
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 0 20px;
+  height: 54px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--line);
+  flex-shrink: 0;
+  box-shadow: var(--shadow);
+}
+.topbar-home { font-size: 11px; color: var(--dim); text-decoration: none; padding: 4px 8px; border-radius: 6px; border: 1px solid var(--line); transition: color .15s, border-color .15s; }
+.topbar-home:hover { color: var(--accent); border-color: var(--accent); }
+.topbar-logo { font-size: 14px; font-weight: 800; letter-spacing: .04em; color: var(--accent); }
+.topbar-sub  { font-size: 12px; color: var(--dim); }
+.topbar-stats { margin-left: auto; display: flex; align-items: center; gap: 20px; }
+.stat-pill { font-size: 11px; color: var(--muted); }
+.stat-pill span { color: var(--text); font-weight: 700; font-size: 13px; margin-right: 3px; }
+
+.theme-btn {
+  width: 32px; height: 32px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: var(--raised);
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 15px;
+  display: flex; align-items: center; justify-content: center;
+  transition: background 150ms, color 150ms;
+  flex-shrink: 0;
+}
+.theme-btn:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+/* ── LAYOUT ── */
+.layout {
+  display: grid;
+  grid-template-columns: var(--sidebar-w) 1fr;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* ── SIDEBAR ── */
+.sidebar {
+  background: var(--surface);
+  border-right: 1px solid var(--line);
+  display: flex; flex-direction: column; overflow: hidden;
+  box-shadow: var(--shadow);
+}
+.sidebar-hd {
+  padding: 12px 16px;
+  font-size: 11px; font-weight: 700;
+  letter-spacing: .1em; text-transform: uppercase;
+  color: var(--dim);
+  border-bottom: 1px solid var(--line);
+  background: var(--surface);
+}
+.sidebar-list { overflow-y: auto; flex: 1; }
+.sidebar-list::-webkit-scrollbar { width: 4px; }
+.sidebar-list::-webkit-scrollbar-thumb { background: var(--line); border-radius: 4px; }
+
+.comp-card {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--line);
+  cursor: pointer;
+  transition: background 120ms;
+  border-left: 3px solid transparent;
+}
+.comp-card:hover { background: var(--raised); }
+[data-theme="dark"]  .comp-card.active { background: #1a2f5a; border-left-color: var(--accent); }
+[data-theme="light"] .comp-card.active { background: #eff6ff; border-left-color: var(--accent); }
+
+.comp-name { font-size: 13px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.comp-url  { font-size: 11px; color: var(--dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
+.comp-meta { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
+
+.platform-badge {
+  display: flex; align-items: center; gap: 3px;
+  font-size: 11px; padding: 2px 7px; border-radius: 4px;
+  background: var(--bg); color: var(--muted);
+  border: 1px solid var(--line);
+}
+.platform-badge .stars { font-size: 11px; font-weight: 700; }
+.stars.g { color: var(--green); }
+.stars.a { color: var(--amber); }
+.stars.r { color: var(--red); }
+.no-app-badge {
+  font-size: 10px; padding: 2px 7px; border-radius: 4px;
+  background: var(--bg); color: var(--dim); border: 1px solid var(--line);
+}
+
+/* ── DETAIL ── */
+.detail { display: flex; flex-direction: column; overflow: hidden; }
+.detail-hd { padding: 14px 22px 0; border-bottom: 1px solid var(--line); flex-shrink: 0; background: var(--surface); }
+.detail-title { font-size: 19px; font-weight: 700; color: var(--text); }
+.detail-url   { font-size: 12px; color: var(--accent); margin-top: 2px; }
+.detail-desc  { font-size: 12px; color: var(--muted); margin-top: 5px; line-height: 1.55; max-height: 40px; overflow: hidden; }
+
+.tabs { display: flex; gap: 0; margin-top: 10px; }
+.tab-btn {
+  padding: 8px 18px; font-size: 13px; font-weight: 500;
+  color: var(--dim); background: none; border: none;
+  border-bottom: 2px solid transparent; cursor: pointer;
+  transition: color 120ms, border-color 120ms;
+}
+.tab-btn:hover { color: var(--muted); }
+.tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 600; }
+
+.tab-body { flex: 1; overflow-y: auto; padding: 18px 22px 32px; background: var(--bg); }
+.tab-body::-webkit-scrollbar { width: 4px; }
+.tab-body::-webkit-scrollbar-thumb { background: var(--line); border-radius: 4px; }
+
+.tab-pane { display: none; }
+.tab-pane.visible { display: block; }
+
+/* ── OVERVIEW ── */
+.platform-section { margin-bottom: 24px; }
+.summary-zh-block, .features-zh-block { margin-bottom: 16px; padding: 14px 16px; background: rgba(99,102,241,.07); border-left: 3px solid var(--accent); border-radius: 8px; }
+.summary-zh-label, .features-zh-label { font-size: 11px; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 7px; }
+.summary-zh-text { font-size: 14px; line-height: 1.7; color: var(--text); }
+.features-zh-list { margin: 0; padding-left: 18px; }
+.features-zh-list li { font-size: 14px; line-height: 1.9; color: var(--text); }
+
+/* Platform comparison table (when both iOS + Android) */
+.plat-compare { margin-bottom: 24px; }
+.plat-compare-title {
+  font-size: 11px; font-weight: 700; letter-spacing: .08em;
+  text-transform: uppercase; color: var(--dim); margin-bottom: 10px;
+}
+.plat-grid {
+  display: grid; grid-template-columns: 110px 1fr 1fr;
+  gap: 1px; background: var(--line);
+  border: 1px solid var(--line); border-radius: 10px; overflow: hidden;
+}
+.plat-cell {
+  background: var(--surface); padding: 10px 16px;
+  font-size: 13px; line-height: 1.4;
+}
+.plat-cell.head {
+  background: var(--raised); font-weight: 700; font-size: 12px;
+  text-align: center; display: flex; flex-direction: column;
+  align-items: center; gap: 2px;
+}
+.plat-cell.label { color: var(--dim); font-size: 12px; }
+.plat-cell .big { font-size: 20px; font-weight: 700; }
+.plat-cell .sub { font-size: 11px; color: var(--dim); margin-top: 2px; }
+.plat-not-avail { color: var(--dim); font-style: italic; font-size: 12px; }
+.platform-title {
+  font-size: 11px; font-weight: 700; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--dim); margin-bottom: 10px;
+  display: flex; align-items: center; gap: 7px;
+}
+.metrics-row { display: flex; gap: 12px; flex-wrap: wrap; }
+.metric-box {
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: 10px; padding: 12px 16px; min-width: 108px;
+  box-shadow: var(--shadow);
+}
+[data-theme="light"] .metric-box { box-shadow: 0 1px 4px rgba(0,0,0,.07); }
+.metric-label { font-size: 10px; color: var(--dim); text-transform: uppercase; letter-spacing: .06em; }
+.metric-val   { font-size: 22px; font-weight: 700; color: var(--text); margin-top: 3px; }
+.metric-val.g { color: var(--green); }
+.metric-val.a { color: var(--amber); }
+.metric-val.r { color: var(--red); }
+.metric-sub   { font-size: 11px; color: var(--muted); margin-top: 1px; }
+
+/* ── REVIEWS ── */
+.rev-controls { margin-bottom: 14px; display: flex; flex-direction: column; gap: 10px; }
+
+.rev-search-wrap { position: relative; }
+.rev-search {
+  width: 100%; padding: 8px 12px 8px 34px;
+  border: 1px solid var(--line); border-radius: 8px;
+  background: var(--surface); color: var(--text);
+  font-size: 13px; outline: none;
+  transition: border-color 150ms;
+}
+.rev-search:focus { border-color: var(--accent); }
+.rev-search::placeholder { color: var(--dim); }
+.rev-search-icon {
+  position: absolute; left: 10px; top: 50%; transform: translateY(-50%);
+  color: var(--dim); font-size: 14px; pointer-events: none;
+}
+
+.rev-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.rev-row-label { font-size: 11px; color: var(--dim); flex-shrink: 0; }
+
+.rev-sort {
+  padding: 5px 10px; border: 1px solid var(--line); border-radius: 6px;
+  background: var(--surface); color: var(--text);
+  font-size: 12px; outline: none; cursor: pointer;
+}
+.rev-sort:focus { border-color: var(--accent); }
+
+.filter-btn {
+  padding: 4px 12px; font-size: 12px; font-weight: 500;
+  border-radius: 20px; border: 1px solid var(--line);
+  background: var(--surface); color: var(--muted); cursor: pointer;
+  transition: all 120ms; white-space: nowrap;
+}
+.filter-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+.filter-btn:not(.active):hover { border-color: var(--accent); color: var(--accent); }
+
+.rev-count-info { font-size: 12px; color: var(--dim); margin-bottom: 12px; }
+
+.review-list { display: flex; flex-direction: column; gap: 10px; }
+.review-item {
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: 10px; padding: 13px 15px;
+  box-shadow: var(--shadow);
+}
+[data-theme="light"] .review-item { box-shadow: 0 1px 3px rgba(0,0,0,.06); }
+.review-top { display: flex; align-items: center; gap: 8px; margin-bottom: 7px; flex-wrap: wrap; }
+.review-stars { display: flex; gap: 1px; }
+.star { font-size: 13px; }
+.star.filled { color: var(--amber); }
+.star.empty  { color: var(--line); }
+.review-author { font-size: 12px; font-weight: 600; color: var(--text); }
+.review-date   { font-size: 11px; color: var(--dim); }
+.review-platform {
+  margin-left: auto; font-size: 10px; padding: 2px 8px;
+  border-radius: 4px; background: var(--bg); color: var(--dim);
+  border: 1px solid var(--line);
+}
+.review-content { font-size: 13px; color: var(--muted); line-height: 1.65; }
+.expand-btn {
+  display: inline-block; margin-top: 5px;
+  font-size: 11px; color: var(--accent); cursor: pointer;
+  background: none; border: none; padding: 0;
+}
+.expand-btn:hover { text-decoration: underline; }
+
+/* ── ANALYSIS ── */
+.analysis-block {
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: 10px; padding: 16px 18px; margin-bottom: 14px;
+  box-shadow: var(--shadow);
+}
+[data-theme="light"] .analysis-block { box-shadow: 0 1px 4px rgba(0,0,0,.07); }
+.analysis-block-title {
+  font-size: 11px; font-weight: 700; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--accent); margin-bottom: 12px;
+}
+
+/* 比較表 */
+.compare-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
+  gap: 0;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  overflow: hidden;
+  font-size: 12px;
+}
+.compare-row { display: contents; }
+.compare-cell {
+  padding: 9px 12px;
+  border-bottom: 1px solid var(--line);
+  color: var(--muted);
+  display: flex; align-items: center; gap: 5px;
+}
+.compare-row:last-child .compare-cell { border-bottom: none; }
+.compare-cell.header {
+  background: var(--bg);
+  font-size: 10px; font-weight: 700;
+  letter-spacing: .06em; text-transform: uppercase;
+  color: var(--dim);
+}
+.compare-cell.cell-rating { color: var(--text); font-weight: 600; }
+
+/* 評分分布 */
+.rating-bars { display: flex; flex-direction: column; gap: 7px; }
+.rating-bar-row { display: flex; align-items: center; gap: 10px; }
+.rating-bar-label { font-size: 12px; color: var(--muted); width: 24px; text-align: right; flex-shrink: 0; }
+.rating-bar-track {
+  flex: 1; height: 10px; background: var(--bg);
+  border-radius: 5px; overflow: hidden; border: 1px solid var(--line);
+}
+.rating-bar-fill { height: 100%; border-radius: 5px; transition: width 400ms ease; }
+.rating-bar-pct { font-size: 11px; color: var(--dim); width: 72px; flex-shrink: 0; }
+
+/* 關鍵字雲 */
+.cloud-section { margin-bottom: 12px; }
+.keyword-label { font-size: 11px; font-weight: 700; margin-bottom: 7px; letter-spacing: .06em; }
+.keyword-label.pos { color: var(--green); }
+.keyword-label.neg { color: var(--red); }
+.word-cloud { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.cloud-word {
+  font-weight: 600; cursor: default; line-height: 1;
+  transition: opacity 150ms;
+}
+.cloud-word.pos { color: var(--green); }
+.cloud-word.neg { color: var(--red); }
+[data-theme="light"] .cloud-word.pos { color: #047857; }
+[data-theme="light"] .cloud-word.neg { color: #b91c1c; }
+
+/* 市場洞察排版 */
+.insight-content { font-size: 13px; color: var(--muted); line-height: 1.75; }
+.insight-h3 { font-size: 14px; font-weight: 700; color: var(--text); margin: 10px 0 6px; }
+.insight-h4 { font-size: 13px; font-weight: 600; color: var(--text); margin: 8px 0 4px; }
+.insight-list { padding-left: 18px; margin: 4px 0 8px; }
+.insight-list li { margin-bottom: 3px; }
+.insight-quote {
+  border-left: 3px solid var(--accent);
+  padding: 6px 12px; margin: 8px 0;
+  background: var(--bg); border-radius: 0 6px 6px 0;
+  font-size: 12px; color: var(--dim); font-style: italic;
+}
+
+.stat-row { display: flex; gap: 18px; margin-bottom: 12px; flex-wrap: wrap; }
+.stat-item { font-size: 12px; color: var(--muted); }
+.stat-item strong { color: var(--text); }
+
+/* 用戶洞察三卡片 */
+.insights-cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-top: 4px;
+}
+@media (max-width: 640px) { .insights-cards { grid-template-columns: 1fr; } }
+.insight-card {
+  border-radius: 10px;
+  padding: 14px;
+  background: var(--bg);
+  border: 1px solid var(--border, rgba(255,255,255,.08));
+}
+.insight-card-header {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 12px; font-weight: 700; margin-bottom: 10px;
+  text-transform: uppercase; letter-spacing: .04em;
+}
+.insight-card--praised .insight-card-header { color: var(--green); }
+.insight-card--complaint .insight-card-header { color: var(--red); }
+.insight-card--advantage .insight-card-header { color: var(--accent); }
+.insight-theme-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 5px 0; border-bottom: 1px solid var(--border, rgba(255,255,255,.05));
+  font-size: 12px;
+}
+.insight-theme-row:last-child { border-bottom: none; }
+.insight-theme-name { color: var(--text); }
+.insight-theme-bar-wrap { flex: 1; margin: 0 10px; }
+.insight-theme-bar {
+  height: 4px; border-radius: 2px;
+  background: var(--accent); opacity: .7;
+}
+.insight-card--praised .insight-theme-bar { background: var(--green); }
+.insight-card--complaint .insight-theme-bar { background: var(--red); }
+.insight-theme-count { color: var(--dim); font-size: 11px; min-width: 30px; text-align: right; }
+.insight-quote-list { list-style: none; padding: 0; margin: 0; }
+.insight-quote-list li {
+  font-size: 11px; color: var(--muted); line-height: 1.55;
+  padding: 4px 0 4px 10px;
+  border-left: 2px solid var(--accent);
+  margin-bottom: 6px;
+}
+.insight-card--complaint .insight-quote-list li { border-left-color: var(--red); }
+.insights-base { font-size: 11px; color: var(--dim); margin-top: 8px; }
+
+/* 空狀態 */
+.empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: var(--dim); gap: 10px; }
+.empty-icon { font-size: 40px; opacity: .4; }
+.empty-text { font-size: 14px; }
+.loading { color: var(--dim); font-size: 13px; text-align: center; padding: 48px; }
+
+/* ── 市場比較 ── */
+.compare-btn { margin-top: 10px; width: 100%; padding: 8px 12px; background: rgba(99,102,241,.12); border: 1px solid rgba(99,102,241,.25); border-radius: 8px; color: var(--accent); font-size: 12px; font-weight: 600; cursor: pointer; letter-spacing: .04em; transition: background .15s; }
+.compare-btn:hover { background: rgba(99,102,241,.22); }
+.compare-view { padding: 20px 24px; overflow-y: auto; height: 100%; box-sizing: border-box; }
+.compare-title { font-size: 18px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+.compare-sub { font-size: 13px; color: var(--muted); margin-bottom: 24px; }
+.matrix-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 32px; }
+.matrix-card { padding: 14px 16px; border-radius: 10px; border: 1px solid rgba(255,255,255,.06); }
+.matrix-card.roleplay  { background: rgba(99,102,241,.08);  border-color: rgba(99,102,241,.2); }
+.matrix-card.revenue   { background: rgba(16,185,129,.07);  border-color: rgba(16,185,129,.2); }
+.matrix-card.enablement{ background: rgba(245,158,11,.07);  border-color: rgba(245,158,11,.2); }
+.matrix-card.consumer  { background: rgba(236,72,153,.07);  border-color: rgba(236,72,153,.2); }
+.matrix-card-title { font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; margin-bottom: 10px; }
+.matrix-card.roleplay   .matrix-card-title { color: #818cf8; }
+.matrix-card.revenue    .matrix-card-title { color: #34d399; }
+.matrix-card.enablement .matrix-card-title { color: #fbbf24; }
+.matrix-card.consumer   .matrix-card-title { color: #f472b6; }
+.matrix-chip { display: inline-flex; align-items: center; gap: 5px; padding: 4px 9px; border-radius: 20px; font-size: 12px; background: rgba(255,255,255,.06); color: var(--text); cursor: pointer; margin: 3px 3px 3px 0; transition: background .15s; }
+.matrix-chip:hover { background: rgba(255,255,255,.14); }
+.matrix-chip .chip-rating { font-size: 10px; color: var(--muted); }
+.compare-section-title { font-size: 13px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 12px; }
+.compare-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.compare-table th { text-align: left; padding: 8px 10px; font-size: 11px; font-weight: 600; color: var(--muted); border-bottom: 1px solid var(--border); text-transform: uppercase; letter-spacing: .04em; }
+.compare-table td { padding: 10px 10px; border-bottom: 1px solid rgba(255,255,255,.04); vertical-align: top; line-height: 1.5; }
+.compare-table tr:last-child td { border-bottom: none; }
+.compare-table tr:hover td { background: rgba(255,255,255,.03); }
+.ct-name { font-weight: 600; color: var(--accent); cursor: pointer; white-space: nowrap; }
+.ct-name:hover { text-decoration: underline; }
+.ct-tag { display: inline-block; padding: 2px 7px; border-radius: 10px; font-size: 11px; font-weight: 500; }
+.ct-tag.roleplay   { background: rgba(99,102,241,.15);  color: #818cf8; }
+.ct-tag.revenue    { background: rgba(16,185,129,.12);  color: #34d399; }
+.ct-tag.enablement { background: rgba(245,158,11,.12);  color: #fbbf24; }
+.ct-tag.consumer   { background: rgba(236,72,153,.12);  color: #f472b6; }
+.ct-rating { font-weight: 600; }
+.ct-rating.g { color: #4ade80; }
+.ct-rating.a { color: #fbbf24; }
+.ct-rating.r { color: #f87171; }
+.ct-platform { font-size: 11px; }
+
+/* ── Head-to-Head 比較 ── */
+.compare-mode-btn { margin-top: 8px; width: 100%; padding: 8px 12px; background: rgba(16,185,129,.1); border: 1px solid rgba(16,185,129,.25); border-radius: 8px; color: var(--green); font-size: 12px; font-weight: 600; cursor: pointer; transition: background .15s; }
+.compare-mode-btn:hover { background: rgba(16,185,129,.2); }
+.compare-mode-btn.active { background: rgba(16,185,129,.2); border-color: var(--green); }
+.compare-select-bar { padding: 8px 12px; background: rgba(16,185,129,.08); border: 1px solid rgba(16,185,129,.2); border-radius: 8px; margin-top: 8px; display: none; }
+.compare-select-bar.visible { display: block; }
+.compare-select-hint { font-size: 11px; color: var(--muted); margin-bottom: 8px; }
+.compare-go-btn { width: 100%; padding: 8px; background: var(--green); color: #fff; border: none; border-radius: 6px; font-size: 12px; font-weight: 700; cursor: pointer; opacity: .4; pointer-events: none; transition: opacity .15s; }
+.compare-go-btn.ready { opacity: 1; pointer-events: auto; }
+.comp-card { position: relative; }
+.comp-check { position: absolute; top: 10px; right: 10px; width: 18px; height: 18px; border-radius: 4px; border: 2px solid var(--line); background: var(--raised); cursor: pointer; display: none; align-items: center; justify-content: center; font-size: 10px; transition: background .12s, border-color .12s; }
+.compare-selecting .comp-check { display: flex; }
+.comp-check.checked { background: var(--green); border-color: var(--green); color: #fff; }
+.comp-card.compare-selected { border-color: var(--green) !important; background: rgba(16,185,129,.06) !important; }
+
+/* ── Head-to-Head 面板 ── */
+.hth-panel { padding: 20px 24px; overflow-y: auto; height: 100%; box-sizing: border-box; }
+.hth-header { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+.hth-back { background: none; border: 1px solid var(--line); border-radius: 6px; color: var(--muted); font-size: 12px; padding: 5px 10px; cursor: pointer; transition: color .15s, border-color .15s; }
+.hth-back:hover { color: var(--accent); border-color: var(--accent); }
+.hth-title { font-size: 16px; font-weight: 700; color: var(--text); }
+.hth-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+.hth-col { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px; }
+.hth-col-name { font-size: 15px; font-weight: 800; color: var(--text); margin-bottom: 4px; }
+.hth-col-tag { display: inline-block; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 10px; margin-bottom: 10px; }
+.hth-col-desc { font-size: 12px; color: var(--muted); line-height: 1.55; margin-bottom: 12px; }
+.hth-app-row { display: flex; justify-content: space-between; align-items: center; padding: 5px 0; border-bottom: 1px solid var(--line); font-size: 12px; }
+.hth-app-row:last-child { border-bottom: none; }
+.hth-app-plat { color: var(--dim); }
+.hth-app-val { font-weight: 600; color: var(--text); }
+
+.hth-themes { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px; margin-bottom: 16px; }
+.hth-section-title { font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-bottom: 14px; }
+.theme-dual-row { display: grid; grid-template-columns: 1fr 80px 1fr; gap: 6px; align-items: center; padding: 5px 0; }
+.theme-dual-label { font-size: 11px; color: var(--muted); text-align: center; }
+.theme-bar-a { display: flex; align-items: center; gap: 6px; justify-content: flex-end; }
+.theme-bar-b { display: flex; align-items: center; gap: 6px; }
+.theme-bar-a .t-bar { background: var(--accent); height: 6px; border-radius: 3px; min-width: 2px; }
+.theme-bar-b .t-bar { background: var(--green); height: 6px; border-radius: 3px; min-width: 2px; }
+.theme-bar-a .t-count { font-size: 11px; color: var(--accent); font-weight: 700; min-width: 22px; text-align: right; }
+.theme-bar-b .t-count { font-size: 11px; color: var(--green); font-weight: 700; min-width: 22px; }
+.hth-legend { display: flex; gap: 16px; margin-bottom: 12px; }
+.hth-legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--muted); }
+.hth-legend-dot { width: 10px; height: 10px; border-radius: 50%; }
+
+.hth-quotes { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+.hth-quote-col { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px; }
+.hth-quote-head { font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; margin-bottom: 10px; }
+.hth-quote-col:first-child .hth-quote-head { color: var(--accent); }
+.hth-quote-col:last-child  .hth-quote-head { color: var(--green); }
+.hth-q-list { list-style: none; padding: 0; }
+.hth-q-list li { font-size: 11px; color: var(--muted); line-height: 1.5; padding: 4px 0 4px 9px; border-left: 2px solid var(--accent); margin-bottom: 6px; }
+.hth-quote-col:last-child .hth-q-list li { border-left-color: var(--green); }
+.hth-complaint-row { display: flex; align-items: center; gap: 6px; font-size: 12px; padding: 3px 0; }
+.hth-complaint-tag { padding: 2px 7px; border-radius: 10px; font-size: 11px; background: rgba(239,68,68,.12); color: var(--red); }
+.hth-complaint-count { font-size: 11px; color: var(--dim); }
+
+/* ── 功能矩陣 ── */
+.feat-matrix-wrap { overflow-x: auto; margin-top: 12px; }
+.feat-matrix { border-collapse: collapse; font-size: 11px; min-width: 100%; }
+.feat-matrix th { padding: 6px 10px; font-size: 10px; font-weight: 700; color: var(--muted); text-align: center; border-bottom: 2px solid var(--line); white-space: nowrap; letter-spacing: .04em; }
+.feat-matrix th.feat-col { text-align: left; min-width: 160px; }
+.feat-matrix td { padding: 7px 10px; border-bottom: 1px solid rgba(255,255,255,.04); text-align: center; }
+.feat-matrix td.feat-col { text-align: left; color: var(--muted); font-size: 11px; }
+.feat-matrix tr:hover td { background: rgba(255,255,255,.03); }
+.feat-yes { color: var(--green); font-size: 14px; }
+.feat-no  { color: var(--dim); font-size: 12px; }
+.feat-comp-head { font-size: 10px; font-weight: 700; color: var(--text); white-space: nowrap; }
+
+/* ── 定價比較表 ── */
+.pricing-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 8px; }
+.pricing-table th { padding: 7px 10px; font-size: 10px; font-weight: 700; color: var(--muted); border-bottom: 1px solid var(--line); text-align: left; letter-spacing: .04em; text-transform: uppercase; }
+.pricing-table td { padding: 8px 10px; border-bottom: 1px solid rgba(255,255,255,.04); color: var(--muted); }
+[data-theme="light"] .pricing-table td { border-bottom-color: var(--line); }
+.pricing-table tr:hover td { background: rgba(255,255,255,.03); }
+[data-theme="light"] .pricing-table tr:hover td { background: var(--raised); }
+.pricing-table .pt-name { font-weight: 600; color: var(--accent); cursor: pointer; }
+.pricing-table .pt-name:hover { text-decoration: underline; }
+.pt-free { display: inline-block; padding: 1px 7px; border-radius: 8px; font-size: 10px; background: rgba(16,185,129,.15); color: var(--green); font-weight: 700; }
+.pt-nofree { display: inline-block; padding: 1px 7px; border-radius: 8px; font-size: 10px; background: rgba(239,68,68,.1); color: var(--red); }
+.pt-price-highlight { color: var(--text); font-weight: 600; }
+
+/* ── 競品定位散點圖 ── */
+.pos-map-wrap { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px 20px; margin-bottom: 28px; }
+.pos-map-title { font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
+.pos-map-svg { width: 100%; height: auto; display: block; overflow: visible; }
+.pos-dot-group { cursor: pointer; }
+.pos-dot-group circle { transition: r .12s; }
+.pos-dot-group:hover circle { r: 10; }
+
+/* ── 跨競品評論搜尋 ── */
+.cross-search-section { margin-bottom: 28px; }
+.cross-search-row { display: flex; gap: 8px; margin-bottom: 12px; }
+.cross-search-input { flex: 1; padding: 8px 14px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--text); font-size: 13px; outline: none; transition: border-color .15s; }
+.cross-search-input:focus { border-color: var(--accent); }
+.cross-search-input::placeholder { color: var(--dim); }
+.cross-search-btn { padding: 8px 18px; background: var(--accent); color: #fff; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap; transition: opacity .15s; }
+.cross-search-btn:hover { opacity: .85; }
+.cross-result-group { margin-bottom: 14px; }
+.cross-result-group-title { font-size: 11px; font-weight: 700; color: var(--accent); letter-spacing: .05em; text-transform: uppercase; margin-bottom: 8px; padding-bottom: 4px; border-bottom: 1px solid var(--line); cursor: pointer; }
+.cross-result-group-title:hover { text-decoration: underline; }
+.cross-result-item { display: flex; align-items: flex-start; gap: 10px; padding: 7px 0; border-bottom: 1px solid rgba(255,255,255,.04); font-size: 12px; }
+[data-theme="light"] .cross-result-item { border-bottom-color: var(--line); }
+.cross-result-content { flex: 1; color: var(--muted); line-height: 1.5; }
+.cross-result-meta { flex-shrink: 0; font-size: 10px; color: var(--dim); white-space: nowrap; text-align: right; }
+
+/* ── CSV 匯出 & 分享連結 ── */
+.export-csv-btn { padding: 4px 11px; font-size: 11px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); color: var(--muted); cursor: pointer; display: inline-flex; align-items: center; gap: 4px; transition: all .12s; }
+.export-csv-btn:hover { border-color: var(--green); color: var(--green); }
+.share-link-btn { padding: 5px 10px; font-size: 11px; border: 1px solid var(--line); border-radius: 6px; background: var(--raised); color: var(--muted); cursor: pointer; transition: all .12s; }
+.share-link-btn:hover { border-color: var(--accent); color: var(--accent); }
+.share-link-btn.copied { border-color: var(--green); color: var(--green); }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <a href="/" class="topbar-home" title="返回首頁">← 首頁</a>
+  <div class="topbar-logo">競品雷達</div>
+  <div class="topbar-sub">業務員 AI 對練 · 市場調研</div>
+  <div class="topbar-stats">
+    <div id="topbarStats"></div>
+    <button class="share-link-btn" id="shareLinkBtn" onclick="copyShareLink()" title="複製目前頁面的分享連結">🔗 分享</button>
+    <button class="theme-btn" id="themeBtn" onclick="toggleTheme()" title="切換主題">🌙</button>
+  </div>
+</header>
+
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar-hd">競品列表 <span id="compCount" style="color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0"></span></div>
+    <button class="compare-btn" onclick="showCompare()">📊 市場比較總覽</button>
+    <button class="compare-mode-btn" id="compareModeBtn" onclick="enterCompareMode()">⚖ 比較兩個競品</button>
+    <div class="compare-select-bar" id="compareSelectBar">
+      <div class="compare-select-hint" id="compareSelectHint">請選擇 2 個競品</div>
+      <button class="compare-go-btn" id="compareGoBtn" onclick="doHeadToHead()">開始比較 →</button>
+    </div>
+    <div class="sidebar-list" id="sidebarList"></div>
+  </aside>
+  <section class="detail">
+    <div id="detailPanel" style="height:100%;display:flex;flex-direction:column">
+      <div class="empty-state">
+        <div class="empty-icon">📊</div>
+        <div class="empty-text">點選左側競品查看詳細分析</div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+const PLATFORM_ZH   = {app_store:'App Store (iOS)', google_play:'Google Play (Android)', product_hunt:'Product Hunt'};
+const PLATFORM_ICON = {app_store:'🍎', google_play:'🤖', product_hunt:'🔶'};
+
+/* ── 全域狀態 ── */
+let allItems  = [];
+let allReports = {};
+let activeId  = null;
+let activeTab = 'overview';
+let revFilter = 'all';
+let revSort   = 'newest';
+let revStars  = 0;
+let revSearch = '';
+let _cachedRevs = [];
+
+/* ── 主題 ── */
+function initTheme() {
+  const t = localStorage.getItem('theme') || 'light';
+  document.documentElement.dataset.theme = t;
+  document.getElementById('themeBtn').textContent = t === 'dark' ? '☀️' : '🌙';
+}
+function toggleTheme() {
+  const cur = document.documentElement.dataset.theme;
+  const next = cur === 'dark' ? 'light' : 'dark';
+  document.documentElement.dataset.theme = next;
+  localStorage.setItem('theme', next);
+  document.getElementById('themeBtn').textContent = next === 'dark' ? '☀️' : '🌙';
+}
+initTheme();
+
+/* ── 工具函式 ── */
+function ratingClass(r) { return r == null ? '' : r >= 4 ? 'g' : r >= 3 ? 'a' : 'r'; }
+function starHtml(n) {
+  const f = Math.round(n || 0);
+  return Array.from({length:5}, (_,i) => `<span class="star ${i<f?'filled':'empty'}">★</span>`).join('');
+}
+function bestRating(apps) {
+  if (!apps || !apps.length) return null;
+  const rs = apps.map(a => a.rating).filter(r => r != null);
+  return rs.length ? Math.max(...rs) : null;
+}
+function inferName(title, url) {
+  if (title) {
+    let t = title;
+    for (const sep of ['|','-','–',':','·']) {
+      if (t.includes(sep)) { t = t.split(sep)[0].trim(); break; }
+    }
+    if (t.split(' ').length > 4)
+      return url.replace(/^https?:\/\//,'').replace(/^www\./,'').split('.')[0]
+               .replace(/^(.)/,c=>c.toUpperCase());
+    return t;
+  }
+  return url.replace(/^https?:\/\//,'').replace(/^www\./,'').split('.')[0]
+           .replace(/^(.)/,c=>c.toUpperCase());
+}
+function esc(s) {
+  return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function debounce(fn, ms) {
+  let timer;
+  return (...args) => { clearTimeout(timer); timer = setTimeout(()=>fn(...args), ms); };
+}
+function lerp(a, b, t) { return a + (b - a) * t; }
+
+/* ── 載入競品清單 ── */
+async function loadList() {
+  const res  = await fetch('/results?limit=100');
+  const data = await res.json();
+  function hotnessScore(apps) {
+    if (!apps || !apps.length) return 0;
+    const total = apps.reduce((s,a) => s+(a.review_count||0), 0);
+    const ratings = apps.map(a=>a.rating).filter(r=>r!=null);
+    const avgRating = ratings.length ? ratings.reduce((s,r)=>s+r,0)/ratings.length : 0;
+    return total * (avgRating / 5);
+  }
+  allItems = data.items.sort((a, b) => hotnessScore(b.apps) - hotnessScore(a.apps));
+  document.getElementById('compCount').textContent = `(${allItems.length})`;
+  const totalRevs = data.items.reduce((s,it)=>s+(it.apps||[]).reduce((ss,a)=>ss+(a.review_count||0),0),0);
+  const withApps  = data.items.filter(it=>it.apps&&it.apps.length).length;
+  document.getElementById('topbarStats').innerHTML = `
+    <span class="stat-pill"><span>${allItems.length}</span> 個競品</span>
+    <span class="stat-pill"><span>${withApps}</span> 有 App</span>
+    <span class="stat-pill"><span>${totalRevs.toLocaleString()}</span> 則評分</span>
+  `;
+  renderSidebar();
+}
+
+/* ── Sidebar ── */
+let compareSelecting = false;
+let compareSelected = [];
+
+function renderSidebar() {
+  const listEl = document.getElementById('sidebarList');
+  if (compareSelecting) listEl.classList.add('compare-selecting');
+  else listEl.classList.remove('compare-selecting');
+
+  listEl.innerHTML = allItems.map(item => {
+    const badges = item.apps && item.apps.length
+      ? item.apps.map(a => {
+          const c = ratingClass(a.rating);
+          return `<div class="platform-badge">${PLATFORM_ICON[a.platform]||''} <span class="stars ${c}">${a.rating!=null?a.rating.toFixed(1):'N/A'}</span></div>`;
+        }).join('')
+      : '<span class="no-app-badge">純 Web 服務</span>';
+    const isChecked = compareSelected.includes(item.id);
+    const isActive  = item.id === activeId && !compareSelecting;
+    return `<div class="comp-card${isActive?' active':''}${isChecked?' compare-selected':''}" onclick="${compareSelecting?`toggleCompareSelect('${item.id}')`:`selectComp('${item.id}')`}">
+      <div class="comp-check${isChecked?' checked':''}" onclick="event.stopPropagation();toggleCompareSelect('${item.id}')">${isChecked?'✓':''}</div>
+      <div class="comp-name">${esc(inferName(item.title,item.url))}</div>
+      <div class="comp-url">${esc(item.url)}</div>
+      <div class="comp-meta">${badges}</div>
+    </div>`;
+  }).join('');
+}
+
+function enterCompareMode() {
+  compareSelecting = !compareSelecting;
+  if (!compareSelecting) { compareSelected = []; }
+  document.getElementById('compareModeBtn').classList.toggle('active', compareSelecting);
+  document.getElementById('compareSelectBar').classList.toggle('visible', compareSelecting);
+  updateCompareBar();
+  renderSidebar();
+}
+
+function toggleCompareSelect(id) {
+  if (compareSelected.includes(id)) {
+    compareSelected = compareSelected.filter(x => x !== id);
+  } else if (compareSelected.length < 2) {
+    compareSelected.push(id);
+  }
+  updateCompareBar();
+  renderSidebar();
+}
+
+function updateCompareBar() {
+  const n = compareSelected.length;
+  document.getElementById('compareSelectHint').textContent =
+    n === 0 ? '請選擇 2 個競品' : n === 1 ? '已選 1 個，再選 1 個' : `已選 2 個 — 可以比較了`;
+  const btn = document.getElementById('compareGoBtn');
+  btn.classList.toggle('ready', n === 2);
+}
+
+function doHeadToHead() {
+  if (compareSelected.length !== 2) return;
+  showHeadToHead(compareSelected[0], compareSelected[1]);
+  // exit compare mode
+  compareSelecting = false; compareSelected = [];
+  document.getElementById('compareModeBtn').classList.remove('active');
+  document.getElementById('compareSelectBar').classList.remove('visible');
+  renderSidebar();
+}
+
+/* ── 選中競品 ── */
+async function selectComp(id) {
+  activeId=id; activeTab='overview';
+  revFilter='all'; revSort='newest'; revStars=0; revSearch=''; _cachedRevs=[];
+  history.replaceState(null, '', '#comp:' + id);
+  renderSidebar();
+  document.getElementById('detailPanel').innerHTML = '<div class="loading">載入中…</div>';
+  if (!allReports[id]) {
+    const res = await fetch(`/results/${id}/report`);
+    allReports[id] = await res.json();
+  }
+  renderDetail(allReports[id]);
+}
+
+/* ── 詳情面板 ── */
+function renderDetail(report) {
+  const item = allItems.find(i=>i.id===activeId);
+  const name = inferName(item.title, item.url);
+  // 攤平所有評論並快取
+  _cachedRevs = [];
+  (report.apps||[]).forEach(app => app.reviews.forEach(r => _cachedRevs.push({...r, platform:app.platform})));
+  const totalFetched = _cachedRevs.length;
+
+  document.getElementById('detailPanel').innerHTML = `
+    <div class="detail-hd">
+      <div class="detail-title">${esc(name)}</div>
+      <div class="detail-url"><a href="${esc(report.url)}" target="_blank" style="color:var(--accent);text-decoration:none">${esc(report.url)}</a></div>
+      ${item.description?`<div class="detail-desc">${esc(item.description)}</div>`:''}
+      <div class="tabs">
+        <button class="tab-btn${activeTab==='overview'?' active':''}" onclick="switchTab('overview')">總覽</button>
+        <button class="tab-btn${activeTab==='reviews'?' active':''}" onclick="switchTab('reviews')">用戶評論${totalFetched?` (${totalFetched})`:''}</button>
+        <button class="tab-btn${activeTab==='analysis'?' active':''}" onclick="switchTab('analysis')">市場分析</button>
+      </div>
+    </div>
+    <div class="tab-body">
+      <div id="tab-overview"  class="tab-pane${activeTab==='overview'?' visible':''}">
+        ${renderOverview(report)}
+      </div>
+      <div id="tab-reviews"   class="tab-pane${activeTab==='reviews'?' visible':''}">
+        ${renderReviews(report)}
+      </div>
+      <div id="tab-analysis"  class="tab-pane${activeTab==='analysis'?' visible':''}">
+        ${renderAnalysis(report)}
+      </div>
+    </div>`;
+  if (activeTab==='reviews') bindReviewEvents();
+}
+
+/* ── 總覽 Tab ── */
+function installCell(app) {
+  if (app.platform === 'app_store') {
+    return `<div class="metric-box"><div class="metric-label">下載量</div><div class="metric-val plat-not-avail" style="font-size:13px">不公開</div><div class="metric-sub">Apple 未公開數據</div></div>`;
+  }
+  return app.installs
+    ? `<div class="metric-box"><div class="metric-label">下載量</div><div class="metric-val" style="font-size:14px">${esc(app.installs)}</div><div class="metric-sub">安裝次數</div></div>`
+    : '';
+}
+
+function renderPlatformComparison(ios, android) {
+  function cell(val, sub, cls='') {
+    return `<div class="plat-cell"><div class="big ${cls}">${val}</div><div class="sub">${sub}</div></div>`;
+  }
+  const iosDl    = '不公開';
+  const iosDlSub = 'Apple 不公開';
+  const andDl    = android.installs ? esc(android.installs) : '—';
+  const andDlSub = '安裝次數';
+  return `<div class="plat-compare">
+    <div class="plat-grid">
+      <div class="plat-cell head" style="background:var(--raised)">指標</div>
+      <div class="plat-cell head">${PLATFORM_ICON.app_store} iOS</div>
+      <div class="plat-cell head">${PLATFORM_ICON.google_play} Android</div>
+
+      <div class="plat-cell label">平均評分</div>
+      ${cell(ios.rating!=null?ios.rating.toFixed(2):'—','/ 5 分',ratingClass(ios.rating))}
+      ${cell(android.rating!=null?android.rating.toFixed(2):'—','/ 5 分',ratingClass(android.rating))}
+
+      <div class="plat-cell label">評分人數</div>
+      ${cell(ios.review_count!=null?ios.review_count.toLocaleString():'—','累積評分')}
+      ${cell(android.review_count!=null?android.review_count.toLocaleString():'—','累積評分')}
+
+      <div class="plat-cell label">下載量</div>
+      <div class="plat-cell"><div class="big plat-not-avail" style="font-size:13px">${iosDl}</div><div class="sub">${iosDlSub}</div></div>
+      ${cell(andDl, andDlSub)}
+
+      <div class="plat-cell label">已爬評論</div>
+      ${cell(ios.reviews.length+' 則','文字評論數')}
+      ${cell(android.reviews.length+' 則','文字評論數')}
+    </div>
+  </div>`;
+}
+
+function renderOverview(report) {
+  let html = '';
+  if (report.summary_zh) {
+    html += `<div class="summary-zh-block"><div class="summary-zh-label">產品大意</div><div class="summary-zh-text">${esc(report.summary_zh)}</div></div>`;
+  }
+  if (report.features_zh) {
+    const lines = report.features_zh.split('\n').map(l=>l.trim()).filter(l=>l);
+    html += `<div class="features-zh-block"><div class="features-zh-label">產品特點</div><ul class="features-zh-list">${lines.map(l=>`<li>${esc(l.replace(/^[・•\-]\s*/,''))}</li>`).join('')}</ul></div>`;
+  }
+  if (!report.apps||!report.apps.length) {
+    return html + `<div style="color:var(--dim);font-size:14px;line-height:2;padding:8px 0">此競品尚未找到對應的行動 App。<br><span style="color:var(--accent)">目前為純 Web 服務。</span></div>`;
+  }
+  html += report.apps.map(app => `
+    <div class="platform-section">
+      <div class="platform-title">${PLATFORM_ICON[app.platform]||''} ${PLATFORM_ZH[app.platform]||app.platform}</div>
+      <div class="metrics-row">
+        <div class="metric-box"><div class="metric-label">平均評分</div><div class="metric-val ${ratingClass(app.rating)}">${app.rating!=null?app.rating.toFixed(2):'—'}</div><div class="metric-sub">滿分 5 分</div></div>
+        <div class="metric-box"><div class="metric-label">評分人數</div><div class="metric-val">${app.review_count!=null?app.review_count.toLocaleString():'—'}</div><div class="metric-sub">累積評分數</div></div>
+        ${installCell(app)}
+        <div class="metric-box"><div class="metric-label">已爬取</div><div class="metric-val">${app.reviews.length}</div><div class="metric-sub">則評論</div></div>
+      </div>
+    </div>`).join('');
+  return html;
+}
+
+/* ── 評論篩選排序 ── */
+function filterAndSortReviews(all) {
+  let rs = [...all];
+  if (revFilter !== 'all') rs = rs.filter(r=>r.platform===revFilter);
+  if (revStars !== 0)      rs = rs.filter(r=>r.rating===revStars);
+  if (revSearch.trim()) {
+    const q = revSearch.toLowerCase();
+    rs = rs.filter(r=>(r.content||'').toLowerCase().includes(q)||(r.author||'').toLowerCase().includes(q));
+  }
+  rs.sort((a,b)=>{
+    if (revSort==='newest'||revSort==='oldest') {
+      const da = a.review_date||'', db = b.review_date||'';
+      if (!da && !db) return 0; if (!da) return 1; if (!db) return -1;
+      return revSort==='newest' ? db.localeCompare(da) : da.localeCompare(db);
+    }
+    const ra = a.rating??0, rb = b.rating??0;
+    return revSort==='rating_high' ? rb-ra : ra-rb;
+  });
+  return rs;
+}
+
+/* ── 單則評論 HTML ── */
+function renderReviewItem(r, idx) {
+  const MAX = 200;
+  const content = r.content || '';
+  const isLong  = content.length > MAX;
+  const bodyHtml = isLong
+    ? `<span class="rev-short-${idx}">${esc(content.slice(0,MAX))}… <button class="expand-btn" data-idx="${idx}" data-full="${esc(content)}">展開 ↓</button></span>`
+    : esc(content);
+  return `<div class="review-item">
+    <div class="review-top">
+      <div class="review-stars">${starHtml(r.rating)}</div>
+      <div class="review-author">${esc(r.author||'匿名')}</div>
+      ${r.review_date?`<div class="review-date">${esc(r.review_date)}</div>`:''}
+      <div class="review-platform">${PLATFORM_ICON[r.platform]||''} ${PLATFORM_ZH[r.platform]||r.platform}</div>
+    </div>
+    <div class="review-content">${bodyHtml}</div>
+  </div>`;
+}
+
+/* ── 評論 Tab ── */
+function renderReviews(report) {
+  if (!report.apps||!report.apps.length) return `<div style="color:var(--dim);font-size:13px">此競品為純 Web 服務，無行動 App 評論。</div>`;
+  if (!_cachedRevs.length) return `<div style="color:var(--dim);font-size:13px">尚無評論資料。</div>`;
+  const platforms = [...new Set(_cachedRevs.map(r=>r.platform))];
+  const platformBtns = ['all',...platforms].map(p=>
+    `<button class="filter-btn${revFilter===p?' active':''}" data-platform="${p}">${p==='all'?'全部':(PLATFORM_ZH[p]||p)}</button>`
+  ).join('');
+  const starBtns = [0,5,4,3,2,1].map(s=>
+    `<button class="filter-btn${revStars===s?' active':''}" data-star="${s}">${s===0?'全部':s+'★'}</button>`
+  ).join('');
+  return `
+    <div class="rev-controls">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+        <span style="font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.06em">篩選 &amp; 排序</span>
+        <button class="export-csv-btn" onclick="exportCSV(activeId)" title="匯出所有評論為 CSV 檔">⬇ 匯出 CSV</button>
+      </div>
+      <div class="rev-search-wrap">
+        <span class="rev-search-icon">🔍</span>
+        <input class="rev-search" id="revSearchInput" type="text" placeholder="搜尋評論內容或作者…" value="${esc(revSearch)}">
+      </div>
+      <div class="rev-row">
+        <span class="rev-row-label">排序：</span>
+        <select class="rev-sort" id="revSortSel">
+          <option value="newest"${revSort==='newest'?' selected':''}>最新優先</option>
+          <option value="oldest"${revSort==='oldest'?' selected':''}>最舊優先</option>
+          <option value="rating_high"${revSort==='rating_high'?' selected':''}>評分高→低</option>
+          <option value="rating_low"${revSort==='rating_low'?' selected':''}>評分低→高</option>
+        </select>
+      </div>
+      <div class="rev-row"><span class="rev-row-label">星等：</span>${starBtns}</div>
+      <div class="rev-row"><span class="rev-row-label">平台：</span>${platformBtns}</div>
+    </div>
+    <div id="revCountInfo" class="rev-count-info"></div>
+    <div class="review-list" id="revList"></div>`;
+}
+
+function refreshReviewList() {
+  const filtered = filterAndSortReviews(_cachedRevs);
+  const countEl = document.getElementById('revCountInfo');
+  const listEl  = document.getElementById('revList');
+  if (!countEl||!listEl) return;
+  countEl.innerHTML = `顯示 <strong style="color:var(--text)">${filtered.length}</strong> 則 / 共 ${_cachedRevs.length} 則評論`;
+  listEl.innerHTML  = filtered.length
+    ? filtered.map((r,i)=>renderReviewItem(r,i)).join('')
+    : '<div style="color:var(--dim);font-size:13px;padding:20px 0">無符合條件的評論。</div>';
+
+  document.querySelectorAll('#tab-reviews .filter-btn[data-star]').forEach(btn => {
+    btn.classList.toggle('active', parseInt(btn.dataset.star) === revStars);
+  });
+  document.querySelectorAll('#tab-reviews .filter-btn[data-platform]').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.platform === revFilter);
+  });
+}
+
+function bindReviewEvents() {
+  refreshReviewList();
+  const searchInput = document.getElementById('revSearchInput');
+  const sortSel     = document.getElementById('revSortSel');
+  const revList     = document.getElementById('revList');
+  if (!searchInput||!sortSel||!revList) return;
+
+  searchInput.addEventListener('input', debounce(e=>{revSearch=e.target.value;refreshReviewList();},250));
+  sortSel.addEventListener('change', e=>{revSort=e.target.value;refreshReviewList();});
+
+  // 星等 & 平台篩選（event delegation on parent .tab-pane）
+  const pane = document.getElementById('tab-reviews');
+  if (pane) {
+    pane.addEventListener('click', e=>{
+      const b = e.target.closest('.filter-btn');
+      if (!b) {
+        // 展開評論
+        const eb = e.target.closest('.expand-btn');
+        if (eb) {
+          const full = eb.dataset.full;
+          eb.parentElement.innerHTML = esc(full);
+        }
+        return;
+      }
+      if ('star' in b.dataset) { revStars=parseInt(b.dataset.star); refreshReviewList(); }
+      if ('platform' in b.dataset) { revFilter=b.dataset.platform; refreshReviewList(); }
+    });
+  }
+}
+
+/* ── 分析 Tab ── */
+function parseMarkdownLite(text) {
+  const lines = (text||'').split('\n');
+  let html = '', inList = false;
+  for (const raw of lines) {
+    const line = raw.trimEnd();
+    if (line.startsWith('# '))       { if(inList){html+='</ul>';inList=false;} html+=`<h3 class="insight-h3">${esc(line.slice(2))}</h3>`; }
+    else if (line.startsWith('## ')) { if(inList){html+='</ul>';inList=false;} html+=`<h4 class="insight-h4">${esc(line.slice(3))}</h4>`; }
+    else if (line.startsWith('- '))  { if(!inList){html+='<ul class="insight-list">';inList=true;} html+=`<li>${esc(line.slice(2))}</li>`; }
+    else if (line.startsWith('> '))  { if(inList){html+='</ul>';inList=false;} html+=`<blockquote class="insight-quote">${esc(line.slice(2))}</blockquote>`; }
+    else { if(inList){html+='</ul>';inList=false;} if(line) html+=`<p style="margin:4px 0">${esc(line)}</p>`; }
+  }
+  if(inList) html+='</ul>';
+  return html;
+}
+
+function buildRatingDist(apps) {
+  const counts = {5:0,4:0,3:0,2:0,1:0};
+  let total = 0;
+  (apps||[]).forEach(app=>(app.reviews||[]).forEach(r=>{
+    const s = Math.round(r.rating||0);
+    if(s>=1&&s<=5){counts[s]++;total++;}
+  }));
+  return {counts, total};
+}
+
+function renderAnalysis(report) {
+  const latestReport = report.reports&&report.reports[0];
+  const apps = report.apps||[];
+  let html = '';
+
+  /* A. 比較表 */
+  if (apps.length) {
+    const rows = apps.map(app=>`
+      <div class="compare-row">
+        <div class="compare-cell">${PLATFORM_ICON[app.platform]||''} ${PLATFORM_ZH[app.platform]||app.platform}</div>
+        <div class="compare-cell cell-rating">${starHtml(app.rating)} ${app.rating!=null?app.rating.toFixed(2):'—'}</div>
+        <div class="compare-cell">${app.review_count!=null?app.review_count.toLocaleString():'—'}</div>
+        <div class="compare-cell">${app.reviews.length} 則</div>
+        <div class="compare-cell">${app.installs?esc(app.installs):'—'}</div>
+      </div>`).join('');
+    html += `<div class="analysis-block">
+      <div class="analysis-block-title">平台比較</div>
+      <div class="compare-grid">
+        <div class="compare-row">
+          <div class="compare-cell header">平台</div>
+          <div class="compare-cell header">評分</div>
+          <div class="compare-cell header">評分人數</div>
+          <div class="compare-cell header">爬取評論</div>
+          <div class="compare-cell header">下載量</div>
+        </div>
+        ${rows}
+      </div>
+    </div>`;
+  }
+
+  /* B. 評分分布 */
+  if (apps.length) {
+    const {counts, total} = buildRatingDist(apps);
+    if (total > 0) {
+      const barColors = {5:'var(--green)',4:'var(--green)',3:'var(--amber)',2:'var(--red)',1:'var(--red)'};
+      const bars = [5,4,3,2,1].map(s=>{
+        const pct = total>0 ? Math.round(counts[s]/total*100) : 0;
+        return `<div class="rating-bar-row">
+          <div class="rating-bar-label">${s}★</div>
+          <div class="rating-bar-track"><div class="rating-bar-fill" style="width:${pct}%;background:${barColors[s]}"></div></div>
+          <div class="rating-bar-pct">${pct}% (${counts[s]} 則)</div>
+        </div>`;
+      }).join('');
+      html += `<div class="analysis-block"><div class="analysis-block-title">評分分布</div><div class="rating-bars">${bars}</div></div>`;
+    }
+  }
+
+  /* C. 關鍵字雲 */
+  if (latestReport) {
+    const rh  = latestReport.review_highlights||{};
+    const pos = (rh.positive||[]).slice(0,12);
+    const neg = (rh.negative||[]).slice(0,12);
+    if (pos.length||neg.length) {
+      const cloudHtml = (words, cls) => words.map((w,i)=>{
+        const size = Math.round(lerp(22, 12, i/(Math.max(words.length-1,1))));
+        return `<span class="cloud-word ${cls}" style="font-size:${size}px">${esc(w)}</span>`;
+      }).join('');
+      html += `<div class="analysis-block">
+        <div class="analysis-block-title">關鍵字雲</div>
+        ${rh.avg_rating!=null?`<div class="stat-row"><div class="stat-item">平均評分 <strong>${rh.avg_rating}</strong></div><div class="stat-item">分析評論 <strong>${rh.total}</strong> 則</div></div>`:''}
+        ${pos.length?`<div class="cloud-section"><div class="keyword-label pos">▲ 正面關鍵字</div><div class="word-cloud">${cloudHtml(pos,'pos')}</div></div>`:''}
+        ${neg.length?`<div class="cloud-section"><div class="keyword-label neg">▼ 負面關鍵字</div><div class="word-cloud">${cloudHtml(neg,'neg')}</div></div>`:''}
+      </div>`;
+    }
+  }
+
+  /* D. 市場洞察 */
+  if (latestReport&&latestReport.market_insight) {
+    html += `<div class="analysis-block"><div class="analysis-block-title">市場洞察</div><div class="insight-content">${parseMarkdownLite(latestReport.market_insight)}</div></div>`;
+  }
+
+  /* E. 競品摘要 */
+  if (latestReport&&latestReport.competitor_summary) {
+    html += `<div class="analysis-block"><div class="analysis-block-title">競品分析摘要</div><div class="insight-content">${parseMarkdownLite(latestReport.competitor_summary)}</div></div>`;
+  }
+
+  /* F. 用戶洞察 */
+  if (latestReport&&latestReport.insights_json) {
+    const ins = latestReport.insights_json;
+    const maxPraised = ins.praised&&ins.praised.length ? ins.praised[0].count : 1;
+    const maxComplaint = ins.complaints&&ins.complaints.length ? ins.complaints[0].count : 1;
+
+    const praisedRows = (ins.praised||[]).map(t=>`
+      <div class="insight-theme-row">
+        <span class="insight-theme-name">${esc(t.theme)}</span>
+        <div class="insight-theme-bar-wrap"><div class="insight-theme-bar" style="width:${Math.round(t.count/maxPraised*100)}%"></div></div>
+        <span class="insight-theme-count">${t.count}</span>
+      </div>`).join('');
+
+    const complaintRows = (ins.complaints||[]).map(t=>`
+      <div class="insight-theme-row">
+        <span class="insight-theme-name">${esc(t.theme)}</span>
+        <div class="insight-theme-bar-wrap"><div class="insight-theme-bar" style="width:${Math.round(t.count/maxComplaint*100)}%"></div></div>
+        <span class="insight-theme-count">${t.count}</span>
+      </div>`).join('');
+
+    const advItems = (ins.advantages||[]).map(s=>`<li>${esc(s)}</li>`).join('');
+    const painItems = (ins.pain_points||[]).map(s=>`<li>${esc(s)}</li>`).join('');
+
+    html += `<div class="analysis-block">
+      <div class="analysis-block-title">用戶洞察</div>
+      <div class="insights-cards">
+        <div class="insight-card insight-card--praised">
+          <div class="insight-card-header">👍 用戶在意的點</div>
+          ${praisedRows||'<div style="color:var(--dim);font-size:12px">資料不足</div>'}
+        </div>
+        <div class="insight-card insight-card--complaint">
+          <div class="insight-card-header">👎 用戶不滿意</div>
+          ${complaintRows||'<div style="color:var(--dim);font-size:12px">資料不足</div>'}
+        </div>
+        <div class="insight-card insight-card--advantage">
+          <div class="insight-card-header">🏆 競品產品優勢</div>
+          ${advItems?`<ul class="insight-quote-list">${advItems}</ul>`:'<div style="color:var(--dim);font-size:12px">資料不足</div>'}
+        </div>
+      </div>
+      ${ins.pain_points&&ins.pain_points.length?`
+      <div style="margin-top:12px">
+        <div style="font-size:11px;font-weight:700;color:var(--red);text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px">⚠ 用戶痛點</div>
+        <ul class="insight-quote-list" style="border-left-color:var(--red)">${painItems}</ul>
+      </div>`:''}
+      <div class="insights-base">基於 ${ins.review_base||0} 則評論分析</div>
+    </div>`;
+  }
+
+  return html || `<div style="color:var(--dim);font-size:13px">尚無分析資料。</div>`;
+}
+
+/* ── Tab 切換 ── */
+function switchTab(tab) {
+  activeTab = tab;
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active', b.getAttribute('onclick').includes(`'${tab}'`)));
+  document.querySelectorAll('.tab-pane').forEach(p=>p.classList.toggle('visible', p.id===`tab-${tab}`));
+  if (tab==='reviews') bindReviewEvents();
+}
+
+/* ── 競品比較總覽 ── */
+const CATEGORY = {
+  'secondnature.ai':  'roleplay',
+  'hyperbound.ai':    'roleplay',
+  'yoodli.ai':        'roleplay',
+  'rehearsal.com':    'roleplay',
+  'quantified.ai':    'roleplay',
+  'awarathon.com':    'roleplay',
+  'gong.io':          'revenue',
+  'chorus.ai':        'revenue',
+  'revenue.io':       'revenue',
+  'mindtickle.com':   'enablement',
+  'allego.com':       'enablement',
+  'saleshood.com':    'enablement',
+  'salesloft.com':    'enablement',
+  'wonderway.io':     'enablement',
+  'speeko.co':        'consumer',
+};
+const CATEGORY_LABEL = {
+  roleplay:   'AI Roleplay / 練習類',
+  revenue:    'Revenue Intelligence / 通話分析',
+  enablement: 'Sales Enablement / 訓練平台',
+  consumer:   '口語溝通（消費者）',
+};
+
+function getDomain(url) {
+  return (url||'').replace(/^https?:\/\/(www\.)?/,'').split('/')[0];
+}
+function getCategory(url) {
+  const d = getDomain(url);
+  for (const [k, v] of Object.entries(CATEGORY)) {
+    if (d.includes(k)) return v;
+  }
+  return 'enablement';
+}
+function getBestApp(apps) {
+  if (!apps||!apps.length) return null;
+  return apps.reduce((best, a) => {
+    const s = (a.review_count||0) * ((a.rating||0)/5);
+    const bs = (best.review_count||0) * ((best.rating||0)/5);
+    return s > bs ? a : best;
+  }, apps[0]);
+}
+
+
+const FEATURE_MATRIX = {
+  features: [
+    'AI Roleplay 對話練習','即時語音/語調分析','通話錄音與轉錄',
+    '銷售培訓課程庫','技能認證機制','Salesforce CRM 整合',
+    '影片 Coaching','同伴學習 (Peer)','iOS App','Android App','B2B 企業定向',
+  ],
+  competitors: {
+    'secondnature.ai': [1,1,0,0,0,0,0,0,0,0,1],
+    'hyperbound.ai':   [1,0,1,0,0,0,0,0,0,0,1],
+    'yoodli.ai':       [1,1,0,1,0,0,0,0,0,0,1],
+    'chorus.ai':       [0,0,1,0,0,1,0,0,1,1,1],
+    'gong.io':         [0,0,1,0,0,1,0,0,1,1,1],
+    'saleshood.com':   [1,0,0,1,1,0,0,1,1,0,1],
+    'salesloft.com':   [0,0,0,1,0,1,0,0,1,0,1],
+    'mindtickle.com':  [1,0,0,1,1,0,0,0,1,1,1],
+    'wonderway.io':    [0,0,0,1,0,0,0,0,0,0,1],
+    'allego.com':      [1,0,0,1,0,0,1,0,1,0,1],
+    'rehearsal.com':   [1,0,0,0,0,0,1,0,1,0,1],
+    'quantified.ai':   [1,1,0,0,1,0,0,0,0,0,1],
+    'awarathon.com':   [1,1,0,0,0,0,0,0,0,0,1],
+    'speeko.co':       [1,1,0,0,0,0,0,0,1,1,0],
+    'revenue.io':      [0,0,1,0,0,1,0,0,0,0,1],
+  }
+};
+
+const PRICING_DATA = {
+  'secondnature.ai': { free: false, starter: '詢價', enterprise: '詢價', model: 'per user' },
+  'hyperbound.ai':   { free: true,  starter: '$49/user/mo', enterprise: '詢價', model: 'per user' },
+  'yoodli.ai':       { free: true,  starter: '$25/user/mo', enterprise: '詢價', model: 'per user' },
+  'chorus.ai':       { free: false, starter: '詢價', enterprise: '詢價', model: 'per seat', note: 'ZoomInfo 旗下' },
+  'gong.io':         { free: false, starter: '$100+/user/mo', enterprise: '詢價', model: 'per user' },
+  'saleshood.com':   { free: false, starter: '$50/user/mo', enterprise: '詢價', model: 'per user' },
+  'salesloft.com':   { free: false, starter: '詢價', enterprise: '詢價', model: 'per seat' },
+  'mindtickle.com':  { free: false, starter: '詢價', enterprise: '詢價', model: 'per seat' },
+  'wonderway.io':    { free: false, starter: '$40/user/mo', enterprise: '詢價', model: 'per user' },
+  'allego.com':      { free: false, starter: '詢價', enterprise: '詢價', model: 'per seat' },
+  'rehearsal.com':   { free: false, starter: '詢價', enterprise: '詢價', model: 'per seat' },
+  'quantified.ai':   { free: false, starter: '詢價', enterprise: '詢價', model: 'per seat' },
+  'awarathon.com':   { free: false, starter: '詢價', enterprise: '詢價', model: 'per seat' },
+  'speeko.co':       { free: true,  starter: '$9.99/mo', enterprise: 'N/A', model: 'per user', note: 'B2C 消費者' },
+  'revenue.io':      { free: false, starter: '詢價', enterprise: '詢價', model: 'per seat' },
+};
+
+function getPricingData(url) {
+  const d = getDomain(url);
+  const key = Object.keys(PRICING_DATA).find(k => d.includes(k) || k.includes(d.split('.')[0]));
+  return key ? PRICING_DATA[key] : null;
+}
+
+/* ── CSV 匯出 ── */
+function exportCSV(websiteId) {
+  const report = allReports[websiteId];
+  if (!report) return;
+  const item = allItems.find(i => i.id === websiteId);
+  const safeName = (inferName(item&&item.title, item&&item.url)||websiteId).replace(/[^\w\-]/g,'_');
+  const rows = [];
+  (report.apps||[]).forEach(app => app.reviews.forEach(r => rows.push({
+    platform: PLATFORM_ZH[app.platform]||app.platform,
+    rating:   r.rating ?? '',
+    author:   r.author || '',
+    date:     r.review_date || '',
+    content:  (r.content||'').replace(/\n/g,' '),
+  })));
+  if (!rows.length) { alert('無評論資料可匯出'); return; }
+  const q = v => `"${String(v).replace(/"/g,'""')}"`;
+  const csv = ['平台,評分,作者,日期,評論內容',
+    ...rows.map(r => [q(r.platform), r.rating, q(r.author), q(r.date), q(r.content)].join(','))
+  ].join('\n');
+  const blob = new Blob(['﻿'+csv], {type:'text/csv;charset=utf-8;'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `reviews_${safeName}.csv`;
+  a.click();
+}
+
+/* ── 複製分享連結 ── */
+function copyShareLink() {
+  navigator.clipboard.writeText(location.href).then(() => {
+    const btn = document.getElementById('shareLinkBtn');
+    if (!btn) return;
+    btn.textContent = '✓ 已複製';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = '🔗 分享'; btn.classList.remove('copied'); }, 2000);
+  }).catch(() => {
+    prompt('複製此連結：', location.href);
+  });
+}
+
+/* ── 跨競品評論搜尋 ── */
+async function crossSearch() {
+  const input = document.getElementById('crossSearchInput');
+  const q = input ? input.value.trim() : '';
+  if (!q) return;
+  const resEl = document.getElementById('crossSearchResults');
+  if (!resEl) return;
+  resEl.innerHTML = '<div style="color:var(--dim);font-size:13px;padding:12px 0">搜尋中…</div>';
+  try {
+    const res = await fetch(`/results/search/reviews?q=${encodeURIComponent(q)}&limit=100`);
+    if (!res.ok) throw new Error('server error');
+    const data = await res.json();
+    if (!data.results||!data.results.length) {
+      resEl.innerHTML = '<div style="color:var(--dim);font-size:13px;padding:12px 0">無符合「'+esc(q)+'」的評論</div>';
+      return;
+    }
+    const byWebsite = {};
+    data.results.forEach(r => {
+      const k = r.website_id||'unknown';
+      if (!byWebsite[k]) byWebsite[k] = {title: r.website_title, id: r.website_id, reviews: []};
+      byWebsite[k].reviews.push(r);
+    });
+    resEl.innerHTML = `<div style="font-size:12px;color:var(--dim);margin-bottom:12px">找到 <strong style="color:var(--text)">${data.results.length}</strong> 則評論，涵蓋 ${Object.keys(byWebsite).length} 個競品</div>` +
+      Object.values(byWebsite).sort((a,b) => b.reviews.length - a.reviews.length).map(group => `
+        <div class="cross-result-group">
+          <div class="cross-result-group-title" onclick="selectComp('${group.id}')">${esc(group.title||group.id)} (${group.reviews.length} 則)</div>
+          ${group.reviews.slice(0,5).map(r => `
+            <div class="cross-result-item">
+              <div class="cross-result-meta">${starHtml(r.rating)}<br>${esc(PLATFORM_ICON[r.platform]||'')} ${esc(r.author||'匿名')}</div>
+              <div class="cross-result-content">${esc((r.content||'').slice(0,160))}${r.content&&r.content.length>160?'…':''}</div>
+            </div>`).join('')}
+          ${group.reviews.length > 5 ? `<div style="font-size:11px;color:var(--dim);padding-top:4px">+ ${group.reviews.length-5} 則更多，點競品名稱查看全部</div>` : ''}
+        </div>`).join('');
+  } catch(e) {
+    resEl.innerHTML = '<div style="color:var(--red);font-size:13px">搜尋失敗，請確認伺服器狀態</div>';
+  }
+}
+
+/* ── 競品定位散點圖 ── */
+function renderPositioningMap(items) {
+  if (!items.length) return '';
+  const CAT_COLOR = { roleplay: '#6366f1', revenue: '#10b981', enablement: '#f59e0b', consumer: '#ec4899' };
+  const W = 680, H = 310;
+  const pad = { top: 24, right: 20, bottom: 44, left: 58 };
+  const pw = W - pad.left - pad.right;
+  const ph = H - pad.top - pad.bottom;
+
+  const pts = items.map(item => {
+    const apps = item.apps||[];
+    const ratings = apps.map(a=>a.rating).filter(r=>r!=null);
+    const avgRating = ratings.length ? ratings.reduce((s,r)=>s+r,0)/ratings.length : 0;
+    const totalRevs = apps.reduce((s,a)=>s+(a.review_count||0), 0);
+    return { item, avgRating, totalRevs, cat: getCategory(item.url) };
+  }).filter(p => p.avgRating > 0);
+
+  if (!pts.length) return '';
+  const maxRevs = Math.max(...pts.map(p=>p.totalRevs), 100);
+  const minRating = 2.5, maxRating = 5.0;
+
+  function xPos(r) { return pad.left + Math.max(0,Math.min(1,(r-minRating)/(maxRating-minRating))) * pw; }
+  function yPos(n) {
+    const logMax = Math.log10(Math.max(maxRevs, 100) + 1);
+    return pad.top + ph - Math.max(0, Math.min(1, Math.log10(n+1)/logMax)) * ph;
+  }
+
+  const xTicks = [3.0, 3.5, 4.0, 4.5, 5.0];
+  const xTickSvg = xTicks.map(v => {
+    const x = xPos(v);
+    return `<line x1="${x}" y1="${pad.top}" x2="${x}" y2="${pad.top+ph}" stroke="currentColor" stroke-opacity=".15" stroke-dasharray="3,3"/>
+<text x="${x}" y="${pad.top+ph+16}" font-size="9" fill="currentColor" fill-opacity=".5" text-anchor="middle">${v}★</text>`;
+  }).join('');
+
+  const yTicks = [10, 100, 1000, 10000].filter(v => v <= maxRevs * 2);
+  const yTickSvg = yTicks.map(v => {
+    const y = yPos(v);
+    const label = v >= 1000 ? (v/1000)+'k' : ''+v;
+    return `<line x1="${pad.left}" y1="${y}" x2="${pad.left+pw}" y2="${y}" stroke="currentColor" stroke-opacity=".12" stroke-dasharray="2,4"/>
+<text x="${pad.left-6}" y="${y+4}" font-size="9" fill="currentColor" fill-opacity=".5" text-anchor="end">${label}</text>`;
+  }).join('');
+
+  const dots = pts.map(p => {
+    const x = xPos(p.avgRating);
+    const y = yPos(p.totalRevs);
+    const r = p.totalRevs > 2000 ? 9 : p.totalRevs > 500 ? 7 : p.totalRevs > 100 ? 6 : 5;
+    const color = CAT_COLOR[p.cat]||'#94a3b8';
+    const name = inferName(p.item.title, p.item.url).slice(0, 13);
+    return `<g class="pos-dot-group" onclick="selectComp('${p.item.id}')">
+  <circle cx="${x}" cy="${y}" r="${r}" fill="${color}" fill-opacity=".8" stroke="${color}" stroke-width="1.5" stroke-opacity=".4"/>
+  <text x="${x+r+3}" y="${y+4}" font-size="9" fill="currentColor" fill-opacity=".7">${esc(name)}</text>
+</g>`;
+  }).join('');
+
+  const legend = Object.entries(CATEGORY_LABEL).map(([cat, label], i) => {
+    const color = CAT_COLOR[cat]||'#94a3b8';
+    const short = label.split('/')[0].trim();
+    const lx = pad.left + i * 160;
+    return `<g transform="translate(${lx},${H-6})">
+  <circle cx="5" cy="-3" r="4" fill="${color}" fill-opacity=".8"/>
+  <text x="13" y="0" font-size="9" fill="currentColor" fill-opacity=".6">${esc(short)}</text>
+</g>`;
+  }).join('');
+
+  return `<div class="pos-map-wrap">
+  <div class="pos-map-title">🗺 競品定位圖</div>
+  <div style="font-size:11px;color:var(--dim);margin-bottom:10px">X 軸 = 平均評分 · Y 軸 = 累積評論數（對數）· 點擊圓點可跳轉詳情</div>
+  <svg viewBox="0 0 ${W} ${H}" class="pos-map-svg" style="max-height:310px">
+    <line x1="${pad.left}" y1="${pad.top}" x2="${pad.left}" y2="${pad.top+ph}" stroke="currentColor" stroke-opacity=".25"/>
+    <line x1="${pad.left}" y1="${pad.top+ph}" x2="${pad.left+pw}" y2="${pad.top+ph}" stroke="currentColor" stroke-opacity=".25"/>
+    ${xTickSvg}${yTickSvg}
+    <text x="${pad.left+pw/2}" y="${H-28}" font-size="10" fill="currentColor" fill-opacity=".5" text-anchor="middle" font-weight="600">平均評分</text>
+    <text x="10" y="${pad.top+ph/2}" font-size="10" fill="currentColor" fill-opacity=".5" text-anchor="middle" font-weight="600" transform="rotate(-90,10,${pad.top+ph/2})">評論數（對數）</text>
+    ${dots}
+    ${legend}
+  </svg>
+</div>`;
+}
+
+async function showHeadToHead(idA, idB) {
+  activeId = null;
+  history.replaceState(null, '', '#compare:' + idA + ':' + idB);
+  document.querySelectorAll('.sidebar-item').forEach(el => el.classList.remove('active'));
+  const panel = document.getElementById('detailPanel');
+  panel.innerHTML = '<div class="loading">載入比較資料…</div>';
+
+  const [repA, repB] = await Promise.all([
+    allReports[idA] ? Promise.resolve(allReports[idA]) : fetch(`/results/${idA}/report`).then(r=>r.json()),
+    allReports[idB] ? Promise.resolve(allReports[idB]) : fetch(`/results/${idB}/report`).then(r=>r.json()),
+  ]);
+  allReports[idA] = repA; allReports[idB] = repB;
+
+  const nameA = esc(repA.title ? repA.title.replace(/\s*[-|—].*$/, '').trim().slice(0,30) : getDomain(repA.url));
+  const nameB = esc(repB.title ? repB.title.replace(/\s*[-|—].*$/, '').trim().slice(0,30) : getDomain(repB.url));
+
+  function colHtml(rep, colorClass) {
+    const cat = getCategory(rep.url);
+    const catLabel = CATEGORY_LABEL[cat] ? CATEGORY_LABEL[cat].split('/')[0].trim() : cat;
+    const appRows = (rep.apps||[]).map(a => {
+      const platIcon = PLATFORM_ICON[a.platform]||a.platform;
+      const platName = PLATFORM_ZH[a.platform]||a.platform;
+      const rStr = a.rating != null ? `★${a.rating.toFixed(2)}` : '—';
+      const rcStr = a.review_count != null ? `${a.review_count.toLocaleString()} 人評` : '—';
+      return `<div class="hth-app-row">
+        <span class="hth-app-plat">${platIcon} ${platName}</span>
+        <span class="hth-app-val">${rStr} &nbsp; ${rcStr}</span>
+      </div>`;
+    }).join('') || '<div style="font-size:11px;color:var(--dim)">無 App 資料</div>';
+    const summary = rep.summary_zh ? `<div class="hth-col-desc">${esc(rep.summary_zh.slice(0,100))}</div>` : '';
+    return `<div class="hth-col">
+      <div class="hth-col-name">${rep.title ? esc(rep.title.replace(/\s*[-|—].*$/,'').trim().slice(0,30)) : esc(getDomain(rep.url))}</div>
+      <span class="hth-col-tag ct-tag ${cat}">${esc(catLabel)}</span>
+      ${summary}
+      ${appRows}
+    </div>`;
+  }
+
+  // theme comparison
+  const insA = (repA.reports&&repA.reports[0]&&repA.reports[0].insights_json)||{};
+  const insB = (repB.reports&&repB.reports[0]&&repB.reports[0].insights_json)||{};
+  const ALL_THEMES = ['易用性','AI 品質','Coaching 回饋','功能完整','費用','技術問題','客服','練習效果'];
+  function themeMap(ins) {
+    const m = {};
+    for (const t of (ins.praised||[])) m['p_'+t.theme] = t.count;
+    for (const t of (ins.complaints||[])) m['c_'+t.theme] = t.count;
+    return m;
+  }
+  const tmA = themeMap(insA), tmB = themeMap(insB);
+
+  function themeSection(prefix, label, colorA, colorB) {
+    const maxVal = Math.max(1, ...ALL_THEMES.map(t => Math.max(tmA[prefix+t]||0, tmB[prefix+t]||0)));
+    const rows = ALL_THEMES.map(t => {
+      const vA = tmA[prefix+t]||0, vB = tmB[prefix+t]||0;
+      if (!vA && !vB) return '';
+      const pA = Math.round(vA/maxVal*120), pB = Math.round(vB/maxVal*120);
+      return `<div class="theme-dual-row">
+        <div class="theme-bar-a">
+          <span class="t-count" style="color:${colorA}">${vA||''}</span>
+          <div class="t-bar" style="width:${pA}px;background:${colorA}"></div>
+        </div>
+        <div class="theme-dual-label">${esc(t)}</div>
+        <div class="theme-bar-b">
+          <div class="t-bar" style="width:${pB}px;background:${colorB}"></div>
+          <span class="t-count" style="color:${colorB}">${vB||''}</span>
+        </div>
+      </div>`;
+    }).filter(Boolean).join('');
+    return rows ? `<div style="margin-bottom:4px;font-size:11px;color:var(--dim);font-weight:600">${label}</div>${rows}` : '';
+  }
+
+  const themeHtml = themeSection('p_','👍 用戶正評主題','var(--accent)','var(--green)')
+    + themeSection('c_','👎 用戶負評主題','var(--red)','var(--amber)');
+
+  function quotesCol(rep, colorClass, side) {
+    const ins = (rep.reports&&rep.reports[0]&&rep.reports[0].insights_json)||{};
+    const adv = (ins.advantages||[]).slice(0,3);
+    const items = adv.map(q=>`<li>${esc(q.slice(0,100))}</li>`).join('');
+    return `<div class="hth-quote-col">
+      <div class="hth-quote-head">${side === 'A' ? nameA : nameB} 👍 用戶優勢</div>
+      ${items ? `<ul class="hth-q-list">${items}</ul>` : '<div style="font-size:11px;color:var(--dim)">無資料</div>'}
+    </div>`;
+  }
+
+  function complaintsBlock(rep, colorVar) {
+    const ins = (rep.reports&&rep.reports[0]&&rep.reports[0].insights_json)||{};
+    const top = (ins.complaints||[]).slice(0,4);
+    if (!top.length) return '<div style="font-size:11px;color:var(--dim)">無負評資料</div>';
+    return top.map(t=>`<div class="hth-complaint-row">
+      <span class="hth-complaint-tag" style="background:rgba(239,68,68,.12);color:${colorVar}">${esc(t.theme)}</span>
+      <span class="hth-complaint-count">${t.count} 則</span>
+    </div>`).join('');
+  }
+
+  panel.innerHTML = `<div class="hth-panel">
+    <div class="hth-header">
+      <button class="hth-back" onclick="showCompare()">← 返回比較</button>
+      <div class="hth-title">⚖ ${nameA} vs ${nameB}</div>
+    </div>
+    <div class="hth-cols">
+      ${colHtml(repA,'var(--accent)')}
+      ${colHtml(repB,'var(--green)')}
+    </div>
+
+    <div class="hth-themes">
+      <div class="hth-section-title">📊 用戶評論主題對比</div>
+      <div class="hth-legend">
+        <div class="hth-legend-item"><div class="hth-legend-dot" style="background:var(--accent)"></div>${nameA}</div>
+        <div class="hth-legend-item"><div class="hth-legend-dot" style="background:var(--green)"></div>${nameB}</div>
+      </div>
+      ${themeHtml || '<div style="font-size:12px;color:var(--dim)">評論資料不足</div>'}
+    </div>
+
+    <div class="hth-quotes">
+      ${quotesCol(repA,'var(--accent)','A')}
+      ${quotesCol(repB,'var(--green)','B')}
+    </div>
+
+    <div class="hth-themes">
+      <div class="hth-section-title">👎 主要抱怨比較</div>
+      <div class="hth-cols" style="grid-template-columns:1fr 1fr;gap:12px;margin-bottom:0">
+        <div>${complaintsBlock(repA,'var(--red)')}</div>
+        <div>${complaintsBlock(repB,'var(--amber)')}</div>
+      </div>
+    </div>
+
+    ${(() => {
+      const pA = getPricingData(repA.url), pB = getPricingData(repB.url);
+      if (!pA && !pB) return '';
+      function pricingCol(p, name) {
+        if (!p) return `<div class="hth-col"><div class="hth-col-name">${name}</div><div style="font-size:12px;color:var(--dim);margin-top:6px">無定價資料</div></div>`;
+        return `<div class="hth-col">
+          <div class="hth-col-name">${name}</div>
+          <div class="hth-app-row"><span class="hth-app-plat">Free tier</span><span class="hth-app-val">${p.free?'<span class="pt-free">有</span>':'<span class="pt-nofree">無</span>'}</span></div>
+          <div class="hth-app-row"><span class="hth-app-plat">起步價</span><span class="hth-app-val ${p.starter!=='詢價'?'pt-price-highlight':''}">${esc(p.starter)}</span></div>
+          <div class="hth-app-row"><span class="hth-app-plat">計費方式</span><span class="hth-app-val">${esc(p.model)}</span></div>
+          ${p.note?`<div class="hth-app-row"><span class="hth-app-plat">備注</span><span class="hth-app-val" style="font-size:11px;color:var(--dim)">${esc(p.note)}</span></div>`:''}
+        </div>`;
+      }
+      return `<div class="hth-themes">
+        <div class="hth-section-title">💰 定價對比</div>
+        <div class="hth-cols">${pricingCol(pA,nameA)}${pricingCol(pB,nameB)}</div>
+      </div>`;
+    })()}
+  </div>`;
+}
+
+function showCompare() {
+  activeId = null;
+  history.replaceState(null, '', '#overview');
+  document.querySelectorAll('.sidebar-item').forEach(el => el.classList.remove('active'));
+  const panel = document.getElementById('detailPanel');
+  const items = allItems;
+
+  const byCategory = {};
+  for (const cat of Object.keys(CATEGORY_LABEL)) byCategory[cat] = [];
+  for (const item of items) {
+    const cat = getCategory(item.url);
+    (byCategory[cat] = byCategory[cat]||[]).push(item);
+  }
+
+  const matrixHtml = Object.entries(CATEGORY_LABEL).map(([cat, label]) => {
+    const members = byCategory[cat]||[];
+    const chips = members.map(item => {
+      const name = inferName(item.title, item.url);
+      const best = getBestApp(item.apps);
+      const ratingStr = best && best.rating != null ? `${best.rating.toFixed(1)}★` : '';
+      return `<span class="matrix-chip" onclick="selectItem('${item.id}')">${esc(name)}${ratingStr?`<span class="chip-rating">${ratingStr}</span>`:''}</span>`;
+    }).join('');
+    return `<div class="matrix-card ${cat}">
+      <div class="matrix-card-title">${esc(label)}</div>
+      ${chips||'<span style="color:var(--muted);font-size:12px">無資料</span>'}
+    </div>`;
+  }).join('');
+
+  const rows = [...items].sort((a,b) => {
+    const ca = getCategory(a.url), cb = getCategory(b.url);
+    const order = ['roleplay','revenue','enablement','consumer'];
+    return order.indexOf(ca) - order.indexOf(cb);
+  }).map(item => {
+    const name = inferName(item.title, item.url);
+    const cat = getCategory(item.url);
+    const best = getBestApp(item.apps);
+    const hasIos = item.apps.some(a=>a.platform==='app_store');
+    const hasAndroid = item.apps.some(a=>a.platform==='google_play');
+    const rc = best ? (best.review_count||0).toLocaleString() : '—';
+    const rval = best ? best.rating : null;
+    const rcls = rval == null ? '' : rval >= 4 ? 'g' : rval >= 3 ? 'a' : 'r';
+    const summary = item.summary_zh || '—';
+    return `<tr>
+      <td><span class="ct-name" onclick="selectItem('${item.id}')">${esc(name)}</span></td>
+      <td><span class="ct-tag ${cat}">${esc(CATEGORY_LABEL[cat].split('/')[0].trim())}</span></td>
+      <td style="max-width:260px;font-size:12px;color:var(--muted)">${esc(summary)}</td>
+      <td class="ct-rating ${rcls}">${rval != null ? rval.toFixed(2) : '—'}</td>
+      <td style="color:var(--muted)">${rc}</td>
+      <td class="ct-platform">${hasIos?'🍎':''} ${hasAndroid?'🤖':''}</td>
+    </tr>`;
+  }).join('');
+
+  // feature matrix
+  const sortedComps = [...items].sort((a,b)=>{
+    const ca=getCategory(a.url),cb=getCategory(b.url);
+    return ['roleplay','revenue','enablement','consumer'].indexOf(ca)-['roleplay','revenue','enablement','consumer'].indexOf(cb);
+  });
+  const featHeader = sortedComps.map(item=>{
+    const d = getDomain(item.url);
+    const n = inferName(item.title,item.url).slice(0,12);
+    return `<th><div class="feat-comp-head">${esc(n)}</div></th>`;
+  }).join('');
+  const featRows = FEATURE_MATRIX.features.map((feat,fi)=>{
+    const cells = sortedComps.map(item=>{
+      const d = getDomain(item.url);
+      const key = Object.keys(FEATURE_MATRIX.competitors).find(k=>d.includes(k)||k.includes(d.split('.')[0]));
+      const val = key ? FEATURE_MATRIX.competitors[key][fi] : 0;
+      return `<td>${val ? '<span class="feat-yes">✅</span>' : '<span class="feat-no">—</span>'}</td>`;
+    }).join('');
+    return `<tr><td class="feat-col">${esc(feat)}</td>${cells}</tr>`;
+  }).join('');
+
+  // pricing table rows
+  const priceRows = [...items].sort((a,b)=>{
+    const ca=getCategory(a.url),cb=getCategory(b.url);
+    return ['roleplay','revenue','enablement','consumer'].indexOf(ca)-['roleplay','revenue','enablement','consumer'].indexOf(cb);
+  }).map(item => {
+    const name = inferName(item.title, item.url);
+    const cat = getCategory(item.url);
+    const p = getPricingData(item.url);
+    const freeBadge = p ? (p.free ? '<span class="pt-free">✓ Free</span>' : '<span class="pt-nofree">無</span>') : '<span style="color:var(--dim)">—</span>';
+    const starterStr = p ? (p.starter !== '詢價' ? `<span class="pt-price-highlight">${esc(p.starter)}</span>` : '<span style="color:var(--dim)">詢價</span>') : '—';
+    const modelStr = p ? esc(p.model) : '—';
+    const noteStr = p && p.note ? `<span style="font-size:10px;color:var(--dim)"> ${esc(p.note)}</span>` : '';
+    return `<tr>
+      <td><span class="ct-name" onclick="selectItem('${item.id}')">${esc(name)}</span><span class="ct-tag ${cat}" style="margin-left:6px;font-size:10px">${esc(CATEGORY_LABEL[cat].split('/')[0].trim())}</span></td>
+      <td>${freeBadge}</td>
+      <td>${starterStr}${noteStr}</td>
+      <td style="color:var(--muted)">${modelStr}</td>
+    </tr>`;
+  }).join('');
+
+  panel.innerHTML = `<div class="compare-view">
+    <div class="compare-title">市場競品比較總覽</div>
+    <div class="compare-sub">共 ${items.length} 個競品 · 點擊任一競品可跳轉詳情</div>
+
+    <div class="cross-search-section">
+      <div class="compare-section-title">🔍 跨競品評論搜尋</div>
+      <div class="cross-search-row">
+        <input class="cross-search-input" id="crossSearchInput" type="text" placeholder="輸入關鍵字搜尋所有競品的用戶評論（如 expensive、AI、buggy）…" onkeydown="if(event.key==='Enter')crossSearch()">
+        <button class="cross-search-btn" onclick="crossSearch()">搜尋</button>
+      </div>
+      <div id="crossSearchResults"></div>
+    </div>
+
+    ${renderPositioningMap(items)}
+
+    <div class="compare-section-title">定位分類矩陣</div>
+    <div class="matrix-grid">${matrixHtml}</div>
+    <div class="compare-section-title">全競品比較表</div>
+    <table class="compare-table">
+      <thead><tr>
+        <th>競品</th><th>定位</th><th>產品大意</th>
+        <th>最高評分</th><th>評分人數</th><th>平台</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+    <div class="compare-section-title" style="margin-top:32px">💰 定價比較</div>
+    <table class="pricing-table">
+      <thead><tr><th style="min-width:160px">競品</th><th>Free Tier</th><th>起步價</th><th>計費方式</th></tr></thead>
+      <tbody>${priceRows}</tbody>
+    </table>
+    <div style="font-size:10px;color:var(--dim);margin-top:6px;margin-bottom:20px">定價資料為公開資訊，僅供參考；實際方案請洽各廠商。</div>
+    <div class="compare-section-title">功能特色矩陣</div>
+    <div class="feat-matrix-wrap">
+      <table class="feat-matrix">
+        <thead><tr><th class="feat-col">功能</th>${featHeader}</tr></thead>
+        <tbody>${featRows}</tbody>
+      </table>
+    </div>
+  </div>`;
+}
+
+function selectItem(id) {
+  const item = allItems.find(i => i.id === id);
+  if (!item) return;
+  selectComp(id);
+}
+
+loadList().then(() => {
+  const hash = location.hash.slice(1);
+  if (hash.startsWith('compare:')) {
+    const parts = hash.split(':');
+    if (parts[1] && parts[2]) showHeadToHead(parts[1], parts[2]);
+  } else if (hash.startsWith('comp:')) {
+    selectComp(hash.slice(5));
+  } else if (hash === 'overview') {
+    showCompare();
+  } else if (hash) {
+    selectComp(hash); // backward compat for bare IDs
+  } else if (sessionStorage.getItem('showCompare') === '1') {
+    sessionStorage.removeItem('showCompare');
+    showCompare();
+  }
+});
+</script>
+</body>
+</html>

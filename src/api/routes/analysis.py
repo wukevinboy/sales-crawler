@@ -6,7 +6,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.analyzers.competitor import build_competitor_summary
 from src.analyzers.market import build_market_insight
+from src.analyzers.review_insights import analyze_review_insights
 from src.analyzers.review_summary import summarize_reviews
+from src.analyzers.website_content import analyze_website_content
 from src.api.schemas import AnalyzeAppRequest
 from src.crawlers.app_store import search_app_store
 from src.crawlers.g2 import search_g2
@@ -89,6 +91,7 @@ async def analyze_app(req: AnalyzeAppRequest, db: AsyncSession = Depends(get_db)
     competitor_summary = build_competitor_summary(app_name, platform_results)
     review_highlights = summarize_reviews(all_reviews)
     market_insight = build_market_insight(platform_results)
+    insights = analyze_review_insights(all_reviews)
 
     await db.execute(
         delete(AnalysisReport).where(AnalysisReport.website_id == website.id)
@@ -99,6 +102,7 @@ async def analyze_app(req: AnalyzeAppRequest, db: AsyncSession = Depends(get_db)
         competitor_summary=competitor_summary,
         review_highlights=review_highlights,
         market_insight=market_insight,
+        insights_json=insights,
     )
     db.add(report)
     await db.commit()
@@ -113,3 +117,23 @@ async def analyze_app(req: AnalyzeAppRequest, db: AsyncSession = Depends(get_db)
         "review_highlights": review_highlights,
         "market_insight": market_insight,
     }
+
+
+@router.post("/website/{website_id}/content")
+async def analyze_website_content_endpoint(
+    website_id: str, db: AsyncSession = Depends(get_db)
+):
+    stmt = select(Website).where(Website.id == website_id)
+    result = await db.execute(stmt)
+    website = result.scalar_one_or_none()
+    if not website:
+        raise HTTPException(status_code=404, detail="Website not found")
+
+    data = analyze_website_content(
+        title=website.title or "",
+        description=website.description or website.content_summary or "",
+    )
+    website.summary_zh = data["summary_zh"]
+    website.features_zh = data["features_zh"]
+    await db.commit()
+    return {"status": "ok", "website_id": website_id, "summary_zh": website.summary_zh}

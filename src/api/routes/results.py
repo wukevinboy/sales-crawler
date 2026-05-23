@@ -5,9 +5,42 @@ from sqlalchemy.orm import selectinload
 
 from src.api.schemas import PaginatedResponse, WebsiteDetailResponse
 from src.db.database import get_db
-from src.db.models import App, Website
+from src.db.models import App, Review, Website
 
 router = APIRouter()
+
+
+@router.get("/search/reviews")
+async def search_reviews(
+    q: str = Query(..., min_length=1, max_length=200),
+    limit: int = Query(100, ge=1, le=500),
+    db: AsyncSession = Depends(get_db),
+):
+    stmt = (
+        select(Review, App, Website)
+        .join(App, Review.app_id == App.id)
+        .join(Website, App.website_id == Website.id)
+        .where(Review.content.ilike(f"%{q}%"))
+        .order_by(Review.rating.desc())
+        .limit(limit)
+    )
+    result = await db.execute(stmt)
+    rows = result.all()
+    return {
+        "query": q,
+        "results": [
+            {
+                "website_id": website.id,
+                "website_title": website.title,
+                "platform": app.platform,
+                "rating": review.rating,
+                "author": review.author,
+                "content": review.content,
+                "review_date": review.review_date,
+            }
+            for review, app, website in rows
+        ],
+    }
 
 
 @router.get("", response_model=PaginatedResponse)
@@ -71,6 +104,8 @@ async def get_report(website_id: str, db: AsyncSession = Depends(get_db)):
         "website_id": website_id,
         "url": website.url,
         "title": website.title,
+        "summary_zh": website.summary_zh,
+        "features_zh": website.features_zh,
         "apps": [
             {
                 "platform": a.platform,
@@ -90,6 +125,7 @@ async def get_report(website_id: str, db: AsyncSession = Depends(get_db)):
                 "competitor_summary": rp.competitor_summary,
                 "review_highlights": rp.review_highlights,
                 "market_insight": rp.market_insight,
+                "insights_json": rp.insights_json,
                 "created_at": rp.created_at.isoformat(),
             }
             for rp in sorted(website.reports, key=lambda r: r.created_at, reverse=True)

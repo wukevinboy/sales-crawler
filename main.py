@@ -44,6 +44,11 @@ async def root():
     return FileResponse(STATIC_DIR / "index.html")
 
 
+@app.get("/dashboard")
+async def dashboard():
+    return FileResponse(STATIC_DIR / "dashboard.html")
+
+
 @app.get("/health")
 async def health():
     return {
