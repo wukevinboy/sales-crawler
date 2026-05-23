@@ -80,7 +80,7 @@ async def get_report(website_id: str, db: AsyncSession = Depends(get_db)):
                 "installs": a.installs,
                 "reviews": [
                     {"rating": r.rating, "content": r.content, "author": r.author}
-                    for r in a.reviews[:20]
+                    for r in a.reviews
                 ],
             }
             for a in website.apps
