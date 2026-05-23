@@ -1,10 +1,13 @@
+from pathlib import Path
+
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
-from sqlalchemy.orm import DeclarativeBase
 
 from src.db.models import Base
 
-DATABASE_URL = "sqlite+aiosqlite:///./data/sales_crawler.db"
+# 用絕對路徑確保 Vercel serverless 環境也能找到資料庫
+_DB_PATH = Path(__file__).resolve().parent.parent.parent / "data" / "sales_crawler.db"
+DATABASE_URL = f"sqlite+aiosqlite:///{_DB_PATH}"
 
 engine = create_async_engine(DATABASE_URL, echo=False)
 AsyncSessionLocal = async_sessionmaker(engine, expire_on_commit=False)
