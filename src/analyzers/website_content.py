@@ -4,7 +4,10 @@ import anthropic
 
 
 def analyze_website_content(title: str, description: str) -> dict:
-    client = anthropic.Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"])
+    api_key = os.environ.get("ANTHROPIC_API_KEY", "")
+    if not api_key:
+        return {"summary_zh": "", "features_zh": ""}
+    client = anthropic.Anthropic(api_key=api_key)
     prompt = f"""以下是一個競品軟體的英文資訊：
 標題：{title}
 說明：{description}
