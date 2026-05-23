@@ -620,6 +620,13 @@ function refreshReviewList() {
   listEl.innerHTML  = filtered.length
     ? filtered.map((r,i)=>renderReviewItem(r,i)).join('')
     : '<div style="color:var(--dim);font-size:13px;padding:20px 0">無符合條件的評論。</div>';
+
+  document.querySelectorAll('#tab-reviews .filter-btn[data-star]').forEach(btn => {
+    btn.classList.toggle('active', parseInt(btn.dataset.star) === revStars);
+  });
+  document.querySelectorAll('#tab-reviews .filter-btn[data-platform]').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.platform === revFilter);
+  });
 }
 
 function bindReviewEvents() {

@@ -92,6 +92,6 @@ async def get_report(website_id: str, db: AsyncSession = Depends(get_db)):
                 "market_insight": rp.market_insight,
                 "created_at": rp.created_at.isoformat(),
             }
-            for rp in website.reports
+            for rp in sorted(website.reports, key=lambda r: r.created_at, reverse=True)
         ],
     }

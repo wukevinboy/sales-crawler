@@ -1,7 +1,7 @@
 import asyncio
 
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.analyzers.competitor import build_competitor_summary
@@ -47,17 +47,31 @@ async def analyze_app(req: AnalyzeAppRequest, db: AsyncSession = Depends(get_db)
             continue
         platform_results.append((platform, res))
 
-        app_record = App(
-            website_id=website.id,
-            platform=platform,
-            app_name=res.app_name,
-            app_id=res.app_id,
-            rating=res.rating,
-            review_count=res.review_count,
-            installs=getattr(res, "installs", None),
+        existing_q = await db.execute(
+            select(App).where(App.website_id == website.id, App.platform == platform)
         )
-        db.add(app_record)
-        await db.flush()
+        existing_app = existing_q.scalar_one_or_none()
+
+        if existing_app:
+            await db.execute(delete(Review).where(Review.app_id == existing_app.id))
+            existing_app.app_name     = res.app_name
+            existing_app.app_id       = res.app_id
+            existing_app.rating       = res.rating
+            existing_app.review_count = res.review_count
+            existing_app.installs     = getattr(res, "installs", None)
+            app_record = existing_app
+        else:
+            app_record = App(
+                website_id=website.id,
+                platform=platform,
+                app_name=res.app_name,
+                app_id=res.app_id,
+                rating=res.rating,
+                review_count=res.review_count,
+                installs=getattr(res, "installs", None),
+            )
+            db.add(app_record)
+            await db.flush()
 
         for rev in res.reviews:
             db.add(
@@ -75,6 +89,10 @@ async def analyze_app(req: AnalyzeAppRequest, db: AsyncSession = Depends(get_db)
     competitor_summary = build_competitor_summary(app_name, platform_results)
     review_highlights = summarize_reviews(all_reviews)
     market_insight = build_market_insight(platform_results)
+
+    await db.execute(
+        delete(AnalysisReport).where(AnalysisReport.website_id == website.id)
+    )
 
     report = AnalysisReport(
         website_id=website.id,
