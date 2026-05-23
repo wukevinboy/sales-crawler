@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sales AI Competitive Intel</title>
+<style>
+:root {
+  --bg:       #080d1a;
+  --surface:  #0f172a;
+  --raised:   #1a2540;
+  --border:   #1e3a5f22;
+  --line:     #1e3060;
+  --accent:   #3b82f6;
+  --accent2:  #60a5fa;
+  --text:     #e2e8f0;
+  --muted:    #94a3b8;
+  --dim:      #475569;
+  --green:    #10b981;
+  --amber:    #f59e0b;
+  --red:      #ef4444;
+  --sidebar-w: 300px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* TOPBAR */
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 0 24px;
+  height: 56px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--line);
+  flex-shrink: 0;
+}
+.topbar-logo {
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--accent2);
+}
+.topbar-sub {
+  font-size: 12px;
+  color: var(--dim);
+}
+.topbar-stats {
+  margin-left: auto;
+  display: flex;
+  gap: 24px;
+}
+.stat-pill {
+  font-size: 11px;
+  color: var(--muted);
+}
+.stat-pill span {
+  color: var(--text);
+  font-weight: 600;
+  font-size: 13px;
+  margin-right: 4px;
+}
+
+/* LAYOUT */
+.layout {
+  display: grid;
+  grid-template-columns: var(--sidebar-w) 1fr;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* SIDEBAR */
+.sidebar {
+  background: var(--surface);
+  border-right: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.sidebar-hd {
+  padding: 14px 16px 10px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--dim);
+  border-bottom: 1px solid var(--line);
+}
+.sidebar-list {
+  overflow-y: auto;
+  flex: 1;
+}
+.sidebar-list::-webkit-scrollbar { width: 4px; }
+.sidebar-list::-webkit-scrollbar-track { background: transparent; }
+.sidebar-list::-webkit-scrollbar-thumb { background: var(--raised); border-radius: 4px; }
+
+.comp-card {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--line);
+  cursor: pointer;
+  transition: background 150ms;
+}
+.comp-card:hover { background: var(--raised); }
+.comp-card.active { background: #1a2f5a; border-left: 3px solid var(--accent); }
+
+.comp-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.comp-url {
+  font-size: 11px;
+  color: var(--dim);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-top: 2px;
+}
+.comp-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+.platform-badge {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  padding: 2px 7px;
+  border-radius: 4px;
+  background: var(--raised);
+  color: var(--muted);
+}
+.platform-badge .stars { font-size: 11px; font-weight: 700; }
+.stars.g { color: var(--green); }
+.stars.a { color: var(--amber); }
+.stars.r { color: var(--red); }
+.no-app-badge {
+  font-size: 10px;
+  padding: 2px 7px;
+  border-radius: 4px;
+  background: #1e293b;
+  color: var(--dim);
+}
+
+/* DETAIL PANEL */
+.detail {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.detail-hd {
+  padding: 16px 24px 0;
+  border-bottom: 1px solid var(--line);
+  flex-shrink: 0;
+}
+.detail-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text);
+}
+.detail-url {
+  font-size: 12px;
+  color: var(--accent2);
+  margin-top: 2px;
+}
+.detail-desc {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 6px;
+  line-height: 1.5;
+  max-height: 48px;
+  overflow: hidden;
+}
+
+.tabs {
+  display: flex;
+  gap: 2px;
+  margin-top: 12px;
+}
+.tab-btn {
+  padding: 8px 16px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: .05em;
+  color: var(--dim);
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  transition: color 150ms, border-color 150ms;
+}
+.tab-btn:hover { color: var(--muted); }
+.tab-btn.active { color: var(--accent2); border-bottom-color: var(--accent2); }
+
+.tab-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px 24px 24px;
+}
+.tab-body::-webkit-scrollbar { width: 4px; }
+.tab-body::-webkit-scrollbar-thumb { background: var(--raised); border-radius: 4px; }
+
+.tab-pane { display: none; }
+.tab-pane.visible { display: block; }
+
+/* Overview */
+.platform-section {
+  margin-bottom: 24px;
+}
+.platform-title {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--dim);
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.platform-icon { font-size: 14px; }
+
+.metrics-row {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.metric-box {
+  background: var(--raised);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 12px 18px;
+  min-width: 110px;
+}
+.metric-label { font-size: 10px; color: var(--dim); text-transform: uppercase; letter-spacing: .08em; }
+.metric-val { font-size: 22px; font-weight: 700; color: var(--text); margin-top: 4px; }
+.metric-val.g { color: var(--green); }
+.metric-val.a { color: var(--amber); }
+.metric-val.r { color: var(--red); }
+.metric-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+/* Reviews */
+.review-filters {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+.filter-btn {
+  padding: 4px 12px;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 20px;
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  transition: all 150ms;
+}
+.filter-btn.active, .filter-btn:hover {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.review-list { display: flex; flex-direction: column; gap: 10px; }
+.review-item {
+  background: var(--raised);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 12px 14px;
+}
+.review-top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+.review-stars { display: flex; gap: 2px; }
+.star { font-size: 13px; }
+.star.filled { color: var(--amber); }
+.star.empty  { color: var(--dim); }
+.review-author { font-size: 12px; font-weight: 600; color: var(--text); }
+.review-platform {
+  margin-left: auto;
+  font-size: 10px;
+  padding: 2px 7px;
+  border-radius: 4px;
+  background: var(--surface);
+  color: var(--dim);
+}
+.review-date { font-size: 11px; color: var(--dim); }
+.review-content { font-size: 12px; color: var(--muted); line-height: 1.6; }
+
+/* Analysis */
+.analysis-block {
+  background: var(--raised);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 16px 20px;
+  margin-bottom: 16px;
+}
+.analysis-block-title {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--accent2);
+  margin-bottom: 10px;
+}
+.analysis-text {
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.7;
+  white-space: pre-wrap;
+}
+
+.keyword-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 4px;
+}
+.chip {
+  font-size: 11px;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-weight: 500;
+}
+.chip.pos { background: #064e3b; color: #6ee7b7; }
+.chip.neg { background: #450a0a; color: #fca5a5; }
+
+/* Empty/Loading states */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--dim);
+  gap: 8px;
+}
+.empty-icon { font-size: 40px; opacity: .4; }
+.empty-text { font-size: 13px; }
+
+.loading { color: var(--dim); font-size: 13px; text-align: center; padding: 40px; }
+
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-logo">Sales AI Intel</div>
+  <div class="topbar-sub">競品情報 · AI 業務員訓練市場</div>
+  <div class="topbar-stats" id="topbarStats"></div>
+</header>
+
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar-hd">Competitors <span id="compCount" style="color:var(--muted);font-weight:400"></span></div>
+    <div class="sidebar-list" id="sidebarList"></div>
+  </aside>
+
+  <section class="detail">
+    <div id="detailPanel">
+      <div class="empty-state" style="height:100%">
+        <div class="empty-icon">📊</div>
+        <div class="empty-text">Select a competitor to view analysis</div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+const PLATFORM_LABELS = {app_store:'App Store',google_play:'Google Play',product_hunt:'Product Hunt'};
+const PLATFORM_ICONS  = {app_store:'🍎',google_play:'🤖',product_hunt:'🔶'};
+
+let allItems = [];
+let allReports = {};
+let activeId = null;
+let activeTab = 'overview';
+let reviewFilter = 'all';
+
+function ratingColor(r) {
+  if (r == null) return '';
+  if (r >= 4) return 'g';
+  if (r >= 3) return 'a';
+  return 'r';
+}
+
+function starHtml(n) {
+  let h = '';
+  for (let i = 1; i <= 5; i++)
+    h += `<span class="star ${i <= Math.round(n) ? 'filled' : 'empty'}">★</span>`;
+  return h;
+}
+
+function bestRating(apps) {
+  if (!apps || !apps.length) return null;
+  const ratings = apps.map(a => a.rating).filter(r => r != null);
+  return ratings.length ? Math.max(...ratings) : null;
+}
+
+async function loadList() {
+  const res = await fetch('/results?limit=50');
+  const data = await res.json();
+  allItems = data.items.sort((a, b) => {
+    const ra = bestRating(a.apps), rb = bestRating(b.apps);
+    if (ra == null && rb == null) return 0;
+    if (ra == null) return 1;
+    if (rb == null) return -1;
+    return rb - ra;
+  });
+
+  document.getElementById('compCount').textContent = `(${allItems.length})`;
+
+  // Topbar stats
+  const totalReviews = data.items.reduce((s, it) => s + (it.apps || []).reduce((ss, a) => ss + (a.review_count || 0), 0), 0);
+  const withApps = data.items.filter(it => it.apps && it.apps.length > 0).length;
+  document.getElementById('topbarStats').innerHTML = `
+    <div class="stat-pill"><span>${allItems.length}</span> Competitors</div>
+    <div class="stat-pill"><span>${withApps}</span> With Apps</div>
+    <div class="stat-pill"><span>${totalReviews.toLocaleString()}</span> Total Reviews</div>
+  `;
+
+  renderSidebar();
+}
+
+function renderSidebar() {
+  const el = document.getElementById('sidebarList');
+  el.innerHTML = allItems.map(item => {
+    const best = bestRating(item.apps);
+    const appsByPlatform = {};
+    (item.apps || []).forEach(a => appsByPlatform[a.platform] = a);
+    const badgeHtml = item.apps && item.apps.length
+      ? item.apps.map(a => {
+          const c = ratingColor(a.rating);
+          return `<div class="platform-badge">${PLATFORM_ICONS[a.platform]||''} <span class="stars ${c}">${a.rating != null ? a.rating.toFixed(1) : 'N/A'}</span></div>`;
+        }).join('')
+      : '<span class="no-app-badge">Web-only</span>';
+
+    return `<div class="comp-card ${item.id === activeId ? 'active' : ''}" data-id="${item.id}" onclick="selectComp('${item.id}')">
+      <div class="comp-name">${escHtml(infer(item.title, item.url))}</div>
+      <div class="comp-url">${escHtml(item.url)}</div>
+      <div class="comp-meta">${badgeHtml}</div>
+    </div>`;
+  }).join('');
+}
+
+function infer(title, url) {
+  if (title) {
+    let t = title;
+    for (const sep of ['|','-','–',':','·']) {
+      if (t.includes(sep)) { t = t.split(sep)[0].trim(); break; }
+    }
+    if (t.split(' ').length > 4) {
+      return url.replace(/^https?:\/\//, '').replace(/^www\./, '').split('.')[0]
+               .replace(/^./, c => c.toUpperCase());
+    }
+    return t;
+  }
+  return url.replace(/^https?:\/\//, '').replace(/^www\./, '').split('.')[0]
+           .replace(/^./, c => c.toUpperCase());
+}
+
+function escHtml(s) {
+  return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+async function selectComp(id) {
+  activeId = id;
+  activeTab = 'overview';
+  reviewFilter = 'all';
+  renderSidebar();
+  renderDetailLoading();
+
+  if (!allReports[id]) {
+    const res = await fetch(`/results/${id}/report`);
+    allReports[id] = await res.json();
+  }
+  renderDetail(allReports[id]);
+}
+
+function renderDetailLoading() {
+  document.getElementById('detailPanel').innerHTML = `<div class="loading">Loading…</div>`;
+}
+
+function renderDetail(report) {
+  const item = allItems.find(i => i.id === activeId);
+  const name = infer(item.title, item.url);
+  const hasApps = report.apps && report.apps.length > 0;
+  const latestReport = report.reports && report.reports[0];
+
+  document.getElementById('detailPanel').innerHTML = `
+    <div class="detail-hd">
+      <div class="detail-title">${escHtml(name)}</div>
+      <div class="detail-url"><a href="${escHtml(report.url)}" target="_blank" style="color:var(--accent2);text-decoration:none">${escHtml(report.url)}</a></div>
+      ${item.description ? `<div class="detail-desc">${escHtml(item.description)}</div>` : ''}
+      <div class="tabs">
+        <button class="tab-btn ${activeTab==='overview'?'active':''}" onclick="switchTab('overview')">Overview</button>
+        <button class="tab-btn ${activeTab==='reviews'?'active':''}" onclick="switchTab('reviews')">Reviews${hasApps ? ` (${report.apps.reduce((s,a)=>s+a.reviews.length,0)})` : ''}</button>
+        <button class="tab-btn ${activeTab==='analysis'?'active':''}" onclick="switchTab('analysis')">Analysis</button>
+      </div>
+    </div>
+    <div class="tab-body">
+      <div id="tab-overview" class="tab-pane ${activeTab==='overview'?'visible':''}">
+        ${renderOverview(report)}
+      </div>
+      <div id="tab-reviews" class="tab-pane ${activeTab==='reviews'?'visible':''}">
+        ${renderReviews(report)}
+      </div>
+      <div id="tab-analysis" class="tab-pane ${activeTab==='analysis'?'visible':''}">
+        ${renderAnalysis(report, latestReport)}
+      </div>
+    </div>
+  `;
+}
+
+function renderOverview(report) {
+  if (!report.apps || !report.apps.length) {
+    return `<div style="color:var(--dim);font-size:13px;padding:16px 0;">
+      No mobile apps found for this competitor.<br>
+      <span style="color:var(--accent2)">This appears to be a web-only service.</span>
+    </div>`;
+  }
+
+  return report.apps.map(app => {
+    const c = ratingColor(app.rating);
+    return `<div class="platform-section">
+      <div class="platform-title">
+        <span class="platform-icon">${PLATFORM_ICONS[app.platform]||''}</span>
+        ${PLATFORM_LABELS[app.platform]||app.platform}
+      </div>
+      <div class="metrics-row">
+        <div class="metric-box">
+          <div class="metric-label">Rating</div>
+          <div class="metric-val ${c}">${app.rating != null ? app.rating.toFixed(2) : '—'}</div>
+          <div class="metric-sub">out of 5.0</div>
+        </div>
+        <div class="metric-box">
+          <div class="metric-label">Ratings</div>
+          <div class="metric-val">${app.review_count != null ? app.review_count.toLocaleString() : '—'}</div>
+          <div class="metric-sub">total ratings</div>
+        </div>
+        ${app.installs ? `<div class="metric-box">
+          <div class="metric-label">Installs</div>
+          <div class="metric-val" style="font-size:14px">${escHtml(app.installs)}</div>
+          <div class="metric-sub">downloads</div>
+        </div>` : ''}
+        <div class="metric-box">
+          <div class="metric-label">Crawled</div>
+          <div class="metric-val" style="font-size:13px">${app.reviews.length}</div>
+          <div class="metric-sub">reviews fetched</div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderReviews(report) {
+  if (!report.apps || !report.apps.length) {
+    return `<div style="color:var(--dim);font-size:13px">No reviews available — web-only service.</div>`;
+  }
+
+  const allRevs = [];
+  report.apps.forEach(app => {
+    app.reviews.forEach(r => {
+      allRevs.push({...r, platform: app.platform, appName: app.app_name});
+    });
+  });
+
+  if (!allRevs.length) {
+    return `<div style="color:var(--dim);font-size:13px">No reviews fetched for this competitor.</div>`;
+  }
+
+  const platforms = [...new Set(allRevs.map(r => r.platform))];
+  const filterBtns = ['all', ...platforms].map(p => {
+    const label = p === 'all' ? 'All' : (PLATFORM_LABELS[p]||p);
+    return `<button class="filter-btn ${reviewFilter===p?'active':''}" onclick="setReviewFilter('${p}')">${label}</button>`;
+  }).join('');
+
+  const filtered = reviewFilter === 'all' ? allRevs : allRevs.filter(r => r.platform === reviewFilter);
+
+  const items = filtered.map(r => {
+    const stars = starHtml(r.rating || 0);
+    return `<div class="review-item">
+      <div class="review-top">
+        <div class="review-stars">${stars}</div>
+        <div class="review-author">${escHtml(r.author || 'Anonymous')}</div>
+        <div class="review-platform">${PLATFORM_ICONS[r.platform]||''} ${PLATFORM_LABELS[r.platform]||r.platform}</div>
+      </div>
+      ${r.rating != null ? `<div class="review-date">${r.rating}/5 stars</div>` : ''}
+      <div class="review-content">${escHtml(r.content || '')}</div>
+    </div>`;
+  }).join('');
+
+  return `<div class="review-filters">${filterBtns}</div><div class="review-list">${items}</div>`;
+}
+
+function renderAnalysis(report, latestReport) {
+  if (!latestReport) {
+    return `<div style="color:var(--dim);font-size:13px">No analysis report available.</div>`;
+  }
+
+  const rh = latestReport.review_highlights || {};
+  const posWords = (rh.positive || []).slice(0, 10);
+  const negWords = (rh.negative || []).slice(0, 10);
+
+  let html = '';
+
+  if (latestReport.competitor_summary) {
+    html += `<div class="analysis-block">
+      <div class="analysis-block-title">Competitor Summary</div>
+      <div class="analysis-text">${escHtml(latestReport.competitor_summary)}</div>
+    </div>`;
+  }
+
+  if (latestReport.market_insight) {
+    html += `<div class="analysis-block">
+      <div class="analysis-block-title">Market Insight</div>
+      <div class="analysis-text">${escHtml(latestReport.market_insight)}</div>
+    </div>`;
+  }
+
+  if (posWords.length || negWords.length) {
+    html += `<div class="analysis-block">
+      <div class="analysis-block-title">Review Sentiment</div>
+      ${rh.avg_rating != null ? `<div style="font-size:13px;color:var(--muted);margin-bottom:10px">Average rating: <strong style="color:var(--text)">${rh.avg_rating}</strong> across <strong style="color:var(--text)">${rh.total}</strong> reviews</div>` : ''}
+      ${posWords.length ? `<div style="font-size:11px;color:var(--green);margin-bottom:6px;font-weight:700;letter-spacing:.08em;text-transform:uppercase">Positive Signals</div>
+      <div class="keyword-chips">${posWords.map(w => `<span class="chip pos">${escHtml(w)}</span>`).join('')}</div>` : ''}
+      ${negWords.length ? `<div style="font-size:11px;color:var(--red);margin-top:12px;margin-bottom:6px;font-weight:700;letter-spacing:.08em;text-transform:uppercase">Negative Signals</div>
+      <div class="keyword-chips">${negWords.map(w => `<span class="chip neg">${escHtml(w)}</span>`).join('')}</div>` : ''}
+    </div>`;
+  }
+
+  return html || `<div style="color:var(--dim);font-size:13px">Analysis pending.</div>`;
+}
+
+function switchTab(tab) {
+  activeTab = tab;
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.getAttribute('onclick').includes(`'${tab}'`)));
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.toggle('visible', p.id === `tab-${tab}`));
+}
+
+function setReviewFilter(filter) {
+  reviewFilter = filter;
+  const report = allReports[activeId];
+  if (report) {
+    document.getElementById('tab-reviews').innerHTML = renderReviews(report);
+  }
+}
+
+loadList();
+</script>
+</body>
+</html>
