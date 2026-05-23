@@ -571,6 +571,33 @@ body {
 .cross-result-content { flex: 1; color: var(--muted); line-height: 1.5; }
 .cross-result-meta { flex-shrink: 0; font-size: 10px; color: var(--dim); white-space: nowrap; text-align: right; }
 
+/* ── 競品定價詳情卡 ── */
+.pd-card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px 20px; margin-bottom: 20px; }
+.pd-hd { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
+.pd-title { font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.pd-badge { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 8px; font-size: 10px; font-weight: 700; }
+.pd-badge-model { background: rgba(99,102,241,.12); color: #818cf8; }
+.pd-badge-trial { background: rgba(16,185,129,.12); color: var(--green); }
+.pd-badge-notrial { background: rgba(239,68,68,.08); color: var(--red); }
+.pd-badge-public { background: rgba(16,185,129,.12); color: var(--green); }
+.pd-badge-hidden { background: rgba(148,163,184,.1); color: var(--dim); }
+.pd-tiers { display: flex; flex-direction: column; gap: 2px; }
+.pd-tier-row { display: grid; grid-template-columns: 120px 160px 1fr; gap: 10px; align-items: start; padding: 9px 10px; border-radius: 8px; background: var(--raised); border: 1px solid transparent; transition: border-color .12s; }
+[data-theme="light"] .pd-tier-row { background: #f8fafc; }
+.pd-tier-row:hover { border-color: var(--accent); }
+.pd-tier-name { font-size: 12px; font-weight: 700; color: var(--accent); }
+.pd-tier-price { font-size: 12px; }
+.pd-price-annual { font-weight: 700; color: var(--text); }
+.pd-price-monthly { font-size: 10px; color: var(--dim); margin-top: 2px; }
+.pd-tier-features { display: flex; flex-wrap: wrap; gap: 4px; }
+.pd-feat-tag { font-size: 10px; padding: 1px 7px; border-radius: 5px; background: rgba(148,163,184,.1); color: var(--muted); }
+.pd-estimate-note { margin-top: 10px; font-size: 10px; color: var(--dim); display: flex; align-items: center; gap: 5px; }
+.pd-footer { display: flex; flex-direction: column; gap: 4px; margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--line); }
+.pd-footer-row { display: flex; gap: 6px; font-size: 11px; }
+.pd-footer-label { color: var(--dim); flex-shrink: 0; min-width: 72px; }
+.pd-footer-val { color: var(--muted); }
+.pd-platform-fee { grid-column: 1 / -1; font-size: 11px; color: var(--muted); background: rgba(251,191,36,.07); border: 1px solid rgba(251,191,36,.2); border-radius: 6px; padding: 5px 10px; margin-top: 6px; }
+
 /* ── CSV 匯出 & 分享連結 ── */
 .export-csv-btn { padding: 4px 11px; font-size: 11px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); color: var(--muted); cursor: pointer; display: inline-flex; align-items: center; gap: 4px; transition: all .12s; }
 .export-csv-btn:hover { border-color: var(--green); color: var(--green); }
@@ -864,6 +891,7 @@ function renderOverview(report) {
     const lines = report.features_zh.split('\n').map(l=>l.trim()).filter(l=>l);
     html += `<div class="features-zh-block"><div class="features-zh-label">產品特點</div><ul class="features-zh-list">${lines.map(l=>`<li>${esc(l.replace(/^[・•\-]\s*/,''))}</li>`).join('')}</ul></div>`;
   }
+  html += renderPricingDetail(report.url);
   if (!report.apps||!report.apps.length) {
     return html + `<div style="color:var(--dim);font-size:14px;line-height:2;padding:8px 0">此競品尚未找到對應的行動 App。<br><span style="color:var(--accent)">目前為純 Web 服務。</span></div>`;
   }
@@ -1254,10 +1282,265 @@ const PRICING_DATA = {
   'revenue.io':      { free: false, starter: '~$175/user/mo', enterprise: '詢價', model: 'per seat', note: 'ENGAGE tier；3rd party estimate' },
 };
 
+const PRICING_DETAIL = {
+  'secondnature.ai': {
+    pricingPublic: false,
+    trial: { available: false, note: '僅提供 Demo，無自助試用' },
+    billingModel: 'per user，年繳',
+    tiers: [
+      { name: '企業方案', annual: '~$30–40/user/mo', features: ['AI roleplay 情境', '自訂場景建立', '分析儀表板', '多語言支援', '企業整合'], estimate: true }
+    ],
+    minContract: '年約，通常為多年合約',
+    source: '第三方估算'
+  },
+  'hyperbound.ai': {
+    pricingPublic: false,
+    trial: { available: false, note: '僅提供 Demo，無自助試用' },
+    billingModel: 'per seat，年繳',
+    tiers: [
+      { name: '企業方案', annual: '~$15,000+/yr (整體費用)', features: ['無限 AI roleplay Bot', '自訂情境建立', '通話評分', '成效分析', '入職支援'], estimate: true }
+    ],
+    minContract: '年約，最低約 10+ 席',
+    source: '第三方估算'
+  },
+  'yoodli.ai': {
+    pricingPublic: true,
+    trial: { available: true, note: '免費方案（5 次終身練習，無需信用卡）', noCard: true },
+    billingModel: 'per user',
+    tiers: [
+      { name: 'Free', annual: '免費', features: ['5 次終身練習', '基本 AI 語音反饋'] },
+      { name: 'Pro', annual: '$8/user/mo（年繳）', monthly: '月繳約 $12–15/mo', features: ['每週最多 10 次 AI roleplay', '錄音上傳分析', '社群功能'] },
+      { name: 'Advanced', annual: '$20/user/mo（年繳）', features: ['無限次 roleplay', '資料不用於 AI 訓練', '職涯發展報銷信'] },
+      { name: 'Enterprise', annual: '詢價', features: ['自訂 AI 情境', '團隊/管理者儀表板', '評分 Rubric', 'SSO / SCIM', 'LMS/HRIS 整合'] }
+    ],
+    minContract: '個人：月繳或年繳；企業：年約',
+    source: '官方定價頁'
+  },
+  'chorus.ai': {
+    pricingPublic: false,
+    trial: { available: false, note: '業務協助試用，無自助試用' },
+    billingModel: 'platform fee + per seat，年繳',
+    tiers: [
+      { name: '基礎套餐（3 席起）', annual: '~$8,000/yr（整包）', features: ['無限通話錄音與轉錄', 'AI 通話分析', 'CRM 整合 (SF/HubSpot)', '交易洞察'], estimate: true },
+      { name: '額外席位', annual: '~$1,200/seat/yr', features: ['超出基礎 3 席的每席費用'], estimate: true },
+      { name: 'Enterprise（ZoomInfo 捆綁）', annual: '詢價', features: ['ZoomInfo 平台捆綁', '大量折扣', '自訂量'] }
+    ],
+    platformFee: '基礎套餐 ~$8,000/yr 含前 3 席',
+    minSeats: '最低 3 席',
+    minContract: '年約（首次可協商），典型 2 年',
+    notes: '2021 年被 ZoomInfo 以 $5.75 億收購，定價通常與 ZoomInfo 捆綁協商',
+    source: '第三方估算 (MarketBetter/Claap/RevPilots)'
+  },
+  'gong.io': {
+    pricingPublic: false,
+    trial: { available: false, note: '僅提供 Demo，無自助試用' },
+    billingModel: 'per user + 強制平台費，年繳預付',
+    tiers: [
+      { name: 'Foundation', annual: '~$117–133/user/mo', features: ['通話錄音與轉錄', '基本交易洞察', '基本分析'], estimate: true },
+      { name: '完整套餐（Engage + Forecast）', annual: '~$240–250/user/mo', features: ['完整營收智能', '預測', '銷售參與', 'Enable Essentials'], estimate: true }
+    ],
+    platformFee: '$5,000–50,000+/yr（依公司規模，強制加收）',
+    implementationFee: '$7,500–65,000（依規模，一次性導入費）',
+    minContract: '年繳預付；典型 2–3 年',
+    notes: '2025 年 3 月起模組拆分定價，實際 TCO 常為名目 per-user 費的 2x 以上',
+    source: '第三方估算 (Oliv.ai/Claap/Sybill.ai)'
+  },
+  'saleshood.com': {
+    pricingPublic: false,
+    trial: { available: true, note: '提供免費試用（時長未公開）' },
+    billingModel: 'per user，年繳',
+    tiers: [
+      { name: 'Essential', annual: '~$40–45/user/mo', features: ['核心 LMS', '內容庫', '銷售 Playbook', '基本 Coaching'], estimate: true },
+      { name: 'Pro', annual: '~$50–75/user/mo', features: ['無使用量上限', '優先支援', '專屬 CSM', '進階分析'] },
+      { name: 'Transform', annual: '詢價', features: ['完整企業功能', '進階整合', '自訂內容', '白手套入職'] }
+    ],
+    minContract: '年約；典型合約 $17,000–123,000/yr',
+    source: '官方 (部分) + Vendr/Capterra'
+  },
+  'salesloft.com': {
+    pricingPublic: false,
+    trial: { available: false, note: '僅提供 Demo，無自助試用' },
+    billingModel: 'per user，年繳',
+    tiers: [
+      { name: 'Essentials', annual: '~$75–100/user/mo', features: ['Email/通話 Cadence', '基本撥號器', '活動追蹤', 'CRM 同步'], estimate: true },
+      { name: 'Advanced', annual: '~$125–140/user/mo', features: ['+ Conversations 通話智能', 'Rhythm AI 工作流程', '進階分析'], estimate: true },
+      { name: 'Premier', annual: '~$165–200+/user/mo', features: ['+ Deals 管道分析', 'AI Coaching', '預測', '專屬支援'], estimate: true }
+    ],
+    minSeats: '通常最低 10–15 席',
+    minContract: '年約；長約可降 15–30%',
+    notes: '2025 年 12 月與 Clari 合併，2026 年套餐可能重新調整',
+    source: '第三方估算 (MarketBetter/Woodpecker)'
+  },
+  'mindtickle.com': {
+    pricingPublic: false,
+    trial: { available: false, note: '僅提供 Demo，無自助試用' },
+    billingModel: 'per user，年繳',
+    tiers: [
+      { name: 'Standard', annual: '~$15–30/user/mo', features: ['銷售培訓', '測驗', '基本 Coaching', '報表'], estimate: true },
+      { name: 'Full Platform', annual: '~$30–50/user/mo', features: ['+ Call AI 對話智能', '數位銷售室', 'AI Roleplay', '間隔重複學習'], estimate: true },
+      { name: 'Enterprise', annual: '詢價', features: ['完整客製化', '進階整合', '白手套導入'] }
+    ],
+    implementationFee: '$3,000–5,000（一次性）',
+    minContract: '年約；典型 36 個月；平均合約 ~$92,000/yr',
+    source: '第三方估算 (JustCall/Vendr/RevPilots)'
+  },
+  'wonderway.io': {
+    pricingPublic: false,
+    trial: { available: true, note: '免費方案（永久，無需信用卡）', noCard: true },
+    billingModel: 'freemium + per user（付費方案需詢價）',
+    tiers: [
+      { name: 'AI Coach Free', annual: '免費（永久）', features: ['無限通話評分', '自訂評分卡', '基本績效追蹤'], noCard: true },
+      { name: 'AI Coach Premium', annual: '~$40+/user/mo', features: ['進階分析', '業代績效儀表板', '主管洞察', 'LMS 整合'], estimate: true },
+      { name: 'Sales LMS（Verity）', annual: '詢價', features: ['資料驅動入職訓練', 'ML 技能缺口分析', '內容管理'] }
+    ],
+    minContract: '付費方案需直接詢價',
+    source: '官方 (免費方案) + 第三方估算 (付費方案)'
+  },
+  'allego.com': {
+    pricingPublic: false,
+    trial: { available: false, note: '僅提供 Demo' },
+    billingModel: 'per user，年繳預付',
+    tiers: [
+      { name: 'Core', annual: '~$15–20/user/mo', features: ['影片 Coaching', '內容管理', '基本 LMS', '強化學習'], estimate: true },
+      { name: 'Growth / Full Platform', annual: '~$20–30/user/mo', features: ['+ 對話智能', '數位銷售室', '分析', 'AI 功能'], estimate: true },
+      { name: 'Enterprise（1,000+ 人）', annual: '詢價', features: ['大量折扣', '客製整合', '專屬成功服務'] }
+    ],
+    minContract: '年繳預付；典型 3 年',
+    notes: '聲稱整合 7 種工具（LMS/Coaching/通話智能/數位銷售室等）於同一費用',
+    source: '第三方估算 (TrustRadius/ITQlick)'
+  },
+  'rehearsal.com': {
+    pricingPublic: true,
+    trial: { available: false, note: '可申請 Demo，無公開試用' },
+    billingModel: 'platform flat fee（固定平台費，非按人頭）',
+    tiers: [
+      { name: 'Standalone App', annual: '$439/mo（年繳預付）', features: ['影片 Roleplay 練習', '非同步練習', 'AI 反饋', '同儕/主管評分', '溝通技巧培訓'] },
+      { name: 'Enterprise（ELB Suite）', annual: '詢價', features: ['整合 ELB Learning 完整平台', 'Studio 教材製作工具', 'Training Arcade 遊戲化'] }
+    ],
+    minContract: '年繳預付',
+    notes: '$439/mo 為整個帳號固定費用（非按人頭），對小型團隊極具競爭力；已被 ELB Learning 收購',
+    source: '官方 (ELB Learning 網站)'
+  },
+  'quantified.ai': {
+    pricingPublic: false,
+    trial: { available: false, note: '僅提供 Demo，純企業客戶' },
+    billingModel: 'per user，年繳',
+    tiers: [
+      { name: '企業方案', annual: '~$85–110/user/mo', features: ['AI 虛擬角色情境模擬', '認證工作流程', '業代戰備評分', '主管儀表板', 'SSO / 合規安全'], estimate: true }
+    ],
+    minContract: '年約；純企業，無 SMB 方案',
+    notes: '專注法規行業（製藥/金融/保險）；AI 仿真虛擬買家為核心差異化功能',
+    source: '第三方估算 (SoftwareFinder/TrustRadius)'
+  },
+  'awarathon.com': {
+    pricingPublic: false,
+    trial: { available: true, note: '15 天免費試用（無需信用卡）', noCard: true },
+    billingModel: 'per user，年繳',
+    tiers: [
+      { name: 'Pro', annual: '~$10/user/mo 起', features: ['影片 Roleplay', 'AI 反饋（語調/肢體語言/節奏）', '遊戲化機制', '基本分析'], estimate: true },
+      { name: 'Premium', annual: '詢價', features: ['+ 進階 AI 分析', '能力圖譜', '深度績效報表', '整合功能'] },
+      { name: 'Premium Plus', annual: '詢價', features: ['完整企業功能', '白手套入職', '專屬 CSM', '客製整合'] },
+      { name: 'Enterprise（2 方案）', annual: '詢價', features: ['大型企業客製方案'] }
+    ],
+    minContract: '年約',
+    notes: '印度廠商，亞太/EMEA 市場定價具競爭力',
+    source: '官方 (部分) + G2/SoftwareSuggest'
+  },
+  'speeko.co': {
+    pricingPublic: true,
+    trial: { available: true, note: '7 天免費試用；月繳 14 天退款；年繳 30 天退款' },
+    billingModel: 'per user（個人）/ per seat 量級計費（企業）',
+    tiers: [
+      { name: 'Free', annual: '免費', features: ['部分課程內容', '範例課程'] },
+      { name: 'Pro（網頁）', annual: '$8.33/user/mo ($99.99/yr)', monthly: '月繳 $29.99/mo', features: ['完整課程庫', 'AI 語音教練', '公開演講課程', '社群功能'] },
+      { name: 'Pro（App Store）', annual: '$7.49/user/mo ($89.99/yr)', monthly: '月繳 $24.99/mo', features: ['同上，iOS/Android 入口'] },
+      { name: 'Business（企業）', annual: '詢價（年繳預付）', features: ['所有 Pro 功能', '團隊儀表板', '進度追蹤', '主管報表', 'SSO（加購）', '零資料隱私（加購）'] }
+    ],
+    minContract: '個人：月繳或年繳；企業：年約預付',
+    notes: 'B2C 起家，現擴展 B2B；主打公開演說/溝通技巧，非銷售專屬 Roleplay',
+    source: '官方定價頁'
+  },
+  'revenue.io': {
+    pricingPublic: false,
+    trial: { available: false, note: '僅提供 Demo，無自助試用' },
+    billingModel: 'per user，年繳；需搭配 Salesforce CRM',
+    tiers: [
+      { name: 'Activate', annual: '~$75–100/user/mo', features: ['入站回應工具', '通話績效', '業代生產力', '基本撥號器', 'Salesforce CTI'], estimate: true },
+      { name: 'Engage', annual: '~$120–180/user/mo', features: ['+ 結構化 Cadence', '多渠道管道加速', 'Email 序列自動化'], estimate: true },
+      { name: 'Orchestrate', annual: '~$200–350/user/mo', features: ['+ AI 交易評分', '預測', '對話智能', 'Coaching 洞察', '專屬支援'], estimate: true }
+    ],
+    minSeats: '建議最低 15 席',
+    minContract: '年約；中位數合約 ~$59,460/yr',
+    notes: '純 Salesforce 生態系；啟用對話智能 + 預測需最高階 Orchestrate 方案',
+    source: '第三方估算 (Vendr/MarketBetter)'
+  }
+};
+
 function getPricingData(url) {
   const d = getDomain(url);
   const key = Object.keys(PRICING_DATA).find(k => d.includes(k) || k.includes(d.split('.')[0]));
   return key ? PRICING_DATA[key] : null;
+}
+
+function getPricingDetail(url) {
+  const d = getDomain(url);
+  const key = Object.keys(PRICING_DETAIL).find(k => d.includes(k) || k.includes(d.split('.')[0]));
+  return key ? PRICING_DETAIL[key] : null;
+}
+
+function renderPricingDetail(url) {
+  const pd = getPricingDetail(url);
+  if (!pd) return '';
+
+  const modelBadge = `<span class="pd-badge pd-badge-model">💳 ${esc(pd.billingModel)}</span>`;
+  const publicBadge = pd.pricingPublic
+    ? `<span class="pd-badge pd-badge-public">✓ 公開定價</span>`
+    : `<span class="pd-badge pd-badge-hidden">🔒 詢價制</span>`;
+  const trialBadge = pd.trial.available
+    ? `<span class="pd-badge pd-badge-trial">✓ ${esc(pd.trial.note)}</span>`
+    : `<span class="pd-badge pd-badge-notrial">✗ ${esc(pd.trial.note)}</span>`;
+
+  const tiersHtml = pd.tiers.map(t => {
+    const feats = (t.features||[]).map(f => `<span class="pd-feat-tag">${esc(f)}</span>`).join('');
+    const estimateMark = t.estimate ? '<span style="color:var(--dim);font-size:9px;margin-left:3px">估算</span>' : '';
+    return `<div class="pd-tier-row">
+      <div class="pd-tier-name">${esc(t.name)}</div>
+      <div class="pd-tier-price">
+        <div class="pd-price-annual">${esc(t.annual)}${estimateMark}</div>
+        ${t.monthly ? `<div class="pd-price-monthly">${esc(t.monthly)}</div>` : ''}
+      </div>
+      <div class="pd-tier-features">${feats}</div>
+    </div>`;
+  }).join('');
+
+  const platformFeeHtml = (pd.platformFee || pd.implementationFee) ? `
+    <div class="pd-platform-fee">
+      ${pd.platformFee ? `⚠ 平台費：${esc(pd.platformFee)}` : ''}
+      ${pd.platformFee && pd.implementationFee ? '　' : ''}
+      ${pd.implementationFee ? `🔧 導入費：${esc(pd.implementationFee)}` : ''}
+    </div>` : '';
+
+  const footerRows = [];
+  if (pd.minSeats) footerRows.push(`<div class="pd-footer-row"><span class="pd-footer-label">最低席位</span><span class="pd-footer-val">${esc(pd.minSeats)}</span></div>`);
+  if (pd.minContract) footerRows.push(`<div class="pd-footer-row"><span class="pd-footer-label">合約方式</span><span class="pd-footer-val">${esc(pd.minContract)}</span></div>`);
+  if (pd.notes) footerRows.push(`<div class="pd-footer-row"><span class="pd-footer-label">備註</span><span class="pd-footer-val">${esc(pd.notes)}</span></div>`);
+  footerRows.push(`<div class="pd-footer-row"><span class="pd-footer-label">資料來源</span><span class="pd-footer-val" style="color:var(--dim)">${esc(pd.source)}</span></div>`);
+
+  const hasEstimate = pd.tiers.some(t => t.estimate);
+  const estimateDisclaimerHtml = hasEstimate
+    ? `<div class="pd-estimate-note">⚠ 標示「估算」者為第三方來源數據，非官方公告，僅供參考。實際價格須向廠商詢價。</div>`
+    : '';
+
+  return `<div class="pd-card">
+    <div class="pd-hd">
+      <span class="pd-title">定價方案</span>
+      ${publicBadge}${modelBadge}${trialBadge}
+    </div>
+    <div class="pd-tiers">${tiersHtml}</div>
+    ${platformFeeHtml}
+    <div class="pd-footer">${footerRows.join('')}</div>
+    ${estimateDisclaimerHtml}
+  </div>`;
 }
 
 /* ── CSV 匯出 ── */
