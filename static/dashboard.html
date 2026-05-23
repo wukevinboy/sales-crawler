@@ -1237,21 +1237,21 @@ const FEATURE_MATRIX = {
 };
 
 const PRICING_DATA = {
-  'secondnature.ai': { free: false, starter: '詢價', enterprise: '詢價', model: 'per user' },
-  'hyperbound.ai':   { free: true,  starter: '$49/user/mo', enterprise: '詢價', model: 'per user' },
-  'yoodli.ai':       { free: true,  starter: '$25/user/mo', enterprise: '詢價', model: 'per user' },
-  'chorus.ai':       { free: false, starter: '詢價', enterprise: '詢價', model: 'per seat', note: 'ZoomInfo 旗下' },
-  'gong.io':         { free: false, starter: '$100+/user/mo', enterprise: '詢價', model: 'per user' },
-  'saleshood.com':   { free: false, starter: '$50/user/mo', enterprise: '詢價', model: 'per user' },
-  'salesloft.com':   { free: false, starter: '詢價', enterprise: '詢價', model: 'per seat' },
+  'secondnature.ai': { free: false, starter: '~$30-40/seat/mo', enterprise: '詢價 (min ~$20K/yr)', model: 'per user', note: '3rd party estimate' },
+  'hyperbound.ai':   { free: true,  starter: '詢價 (Enterprise only)', enterprise: '詢價', model: 'per user', note: 'SMB plan removed; free trial available' },
+  'yoodli.ai':       { free: true,  starter: '$8/user/mo', enterprise: '詢價', model: 'per user', note: '年繳方案；月繳 $25/mo' },
+  'chorus.ai':       { free: false, starter: '~$100/seat/mo', enterprise: '詢價', model: 'per seat', note: 'ZoomInfo 旗下；3rd party estimate + ~$8K/yr platform' },
+  'gong.io':         { free: false, starter: '~$100+/user/mo', enterprise: '詢價', model: 'per user', note: '3rd party estimate；platform fee additional' },
+  'saleshood.com':   { free: false, starter: '$45/user/mo', enterprise: '詢價', model: 'per user' },
+  'salesloft.com':   { free: false, starter: '~$75/user/mo', enterprise: '詢價', model: 'per seat', note: 'Essentials tier；3rd party estimate' },
   'mindtickle.com':  { free: false, starter: '詢價', enterprise: '詢價', model: 'per seat' },
-  'wonderway.io':    { free: false, starter: '$40/user/mo', enterprise: '詢價', model: 'per user' },
-  'allego.com':      { free: false, starter: '詢價', enterprise: '詢價', model: 'per seat' },
-  'rehearsal.com':   { free: false, starter: '詢價', enterprise: '詢價', model: 'per seat' },
-  'quantified.ai':   { free: false, starter: '詢價', enterprise: '詢價', model: 'per seat' },
-  'awarathon.com':   { free: false, starter: '詢價', enterprise: '詢價', model: 'per seat' },
-  'speeko.co':       { free: true,  starter: '$9.99/mo', enterprise: 'N/A', model: 'per user', note: 'B2C 消費者' },
-  'revenue.io':      { free: false, starter: '詢價', enterprise: '詢價', model: 'per seat' },
+  'wonderway.io':    { free: false, starter: '詢價', enterprise: '詢價', model: 'per user', note: '官網不公開定價' },
+  'allego.com':      { free: false, starter: '~$150-250/user/mo', enterprise: '詢價', model: 'per seat', note: '3rd party estimate' },
+  'rehearsal.com':   { free: true,  starter: '$439/mo', enterprise: '詢價', model: 'platform fee', note: '30-day free trial；$439/mo 為平台費（非 per user）' },
+  'quantified.ai':   { free: false, starter: '~$85-110/user/mo', enterprise: '詢價', model: 'per seat', note: '3rd party estimate' },
+  'awarathon.com':   { free: true,  starter: '詢價', enterprise: '詢價', model: 'per seat', note: '15-day free trial' },
+  'speeko.co':       { free: true,  starter: '$8.33/mo', enterprise: 'N/A', model: 'per user', note: 'B2C 消費者；年繳方案 $99.99/yr；月繳 $12.99/mo' },
+  'revenue.io':      { free: false, starter: '~$175/user/mo', enterprise: '詢價', model: 'per seat', note: 'ENGAGE tier；3rd party estimate' },
 };
 
 function getPricingData(url) {
