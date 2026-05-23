@@ -26,7 +26,7 @@ def _strict_name_match(query: str, candidate: str) -> bool:
     return len(c_words) <= max(2, len(q_words) * 2)
 
 
-async def search_google_play(app_name: str, num_reviews: int = 200) -> GooglePlayResult | None:
+async def search_google_play(app_name: str, num_reviews: int = 500) -> GooglePlayResult | None:
     try:
         from google_play_scraper import Sort, app, reviews as gp_reviews, search
 

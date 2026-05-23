@@ -35,7 +35,7 @@ def _itunes_search(app_name: str, country: str = "us") -> dict | None:
     return None
 
 
-def _itunes_reviews_all(app_id: str, country: str = "us", max_pages: int = 10) -> list[dict]:
+def _itunes_reviews_all(app_id: str, country: str = "us", max_pages: int = 20) -> list[dict]:
     reviews = []
     for page in range(1, max_pages + 1):
         url = (
